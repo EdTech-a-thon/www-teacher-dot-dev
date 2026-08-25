@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,700;1,700&family=Figtree:ital,wght@0,700;1,700&family=IBM+Plex+Sans:ital,wght@0,700;1,700&family=Inter:ital,wght@0,700;1,700&family=Plus+Jakarta+Sans:ital,wght@0,700;1,700&family=Public+Sans:wght@400;500;600;700;800&family=Sora:wght@500;600;700&family=Source+Sans+3:ital,wght@0,700;1,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=DM+Sans:ital,wght@0,700;1,700&family=Figtree:ital,wght@0,700;1,700&family=IBM+Plex+Sans:ital,wght@0,700;1,700&family=Inter:ital,wght@0,700;1,700&family=Plus+Jakarta+Sans:ital,wght@0,700;1,700&family=Public+Sans:wght@400;500;600;700;800&family=Sora:wght@500;600;700&family=Source+Sans+3:ital,wght@0,700;1,700&display=swap");
 
 @import "tailwindcss";
 
@@ -102,6 +102,11 @@ img {
   font-family: "Source Sans 3", "Public Sans", system-ui, sans-serif;
 }
 
+.font-handwritten {
+  font-family: "Caveat", "Comic Sans MS", cursive;
+  font-weight: 700;
+}
+
 .page-shell {
   min-height: 100vh;
   background: linear-gradient(
@@ -159,6 +164,19 @@ img {
   border-radius: 0.125rem;
   background: var(--color-slate-100);
   object-fit: cover;
+}
+
+.polaroid-caption {
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.85rem;
+  color: var(--color-slate-700);
+  font-size: clamp(1.45rem, 7vw, 2rem);
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  transform: rotate(1deg);
 }
 
 .polaroid-back {
