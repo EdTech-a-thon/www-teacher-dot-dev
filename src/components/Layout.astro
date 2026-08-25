@@ -14,6 +14,10 @@ const {
 } = Astro.props;
 
 const pageGap = compactContent ? "gap-8" : "gap-12 sm:gap-16 md:gap-20";
+const cfBeaconToken = import.meta.env.CF_BEACON?.trim();
+const cfBeaconConfig = cfBeaconToken
+  ? JSON.stringify({ token: cfBeaconToken })
+  : undefined;
 const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
 const isActive = (href: string) =>
   currentPath === href || currentPath.startsWith(`${href}/`);
@@ -28,6 +32,16 @@ const eventsOpen = isActive("/events");
     <meta name="theme-color" content="#fffdf8" />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {
+      cfBeaconConfig && (
+        <script
+          is:inline
+          type="module"
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon={cfBeaconConfig}
+        />
+      )
+    }
     <title>{title ? `${title} – teacher.dev` : "teacher.dev"}</title>
   </head>
   <body class="text-slate-950">
