@@ -1,0 +1,24 @@
+---
+import NewsletterSignup from "./NewsletterSignup.astro";
+
+interface Props {
+  id: string;
+  title?: string;
+}
+
+const { id, title = "Get new issues in your inbox" } = Astro.props;
+---
+
+<div class="overflow-hidden rounded-lg border border-slate-400 border-b-4 bg-white">
+  <div class="p-5">
+    <h2 id={`${id}-heading`} class="text-lg font-extrabold text-slate-950">
+      {title}
+    </h2>
+    <div class="mt-3">
+      <NewsletterSignup id={id} compact />
+    </div>
+  </div>
+  <p class="w-full border-t border-dashed border-slate-400 bg-slate-100 px-5 py-3 text-sm text-slate-600">
+    New app releases and updates from the teacher.dev team—delivered to your inbox.
+  </p>
+</div>

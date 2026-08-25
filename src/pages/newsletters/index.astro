@@ -1,0 +1,114 @@
+---
+import { Image } from "astro:assets";
+import { getCollection } from "astro:content";
+import Layout from "../../components/Layout.astro";
+import NewsletterCard from "../../components/NewsletterCard.astro";
+import NewsletterSignupCard from "../../components/NewsletterSignupCard.astro";
+
+const PAGE_SIZE = 6;
+const newsletters = (await getCollection("newsletters")).sort((a, b) =>
+  b.data.date.localeCompare(a.data.date),
+);
+const latest = newsletters[0];
+const archive = newsletters;
+const cards = archive.slice(0, PAGE_SIZE);
+const totalPages = Math.ceil(archive.length / PAGE_SIZE);
+const latestDate = latest
+  ? new Intl.DateTimeFormat("en", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }).format(new Date(`${latest.data.date}T00:00:00`))
+  : "";
+---
+
+<Layout
+  title="Newsletters"
+  description="Browse teacher.dev newsletters and sign up for future EdTech-a-thon updates."
+  compactContent
+>
+  {
+    latest ? (
+      <section class="grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-center">
+        <div class="flex flex-col gap-5">
+          <p class="text-sm font-extrabold uppercase tracking-wide text-primary-700">
+            {latestDate}
+          </p>
+          <h1 class="text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl">
+            {latest.data.title}
+          </h1>
+          <p class="text-lg leading-8 text-slate-700">{latest.data.preview}</p>
+          <a
+            href={`/newsletters/${latest.id}`}
+            class="w-fit py-1 text-sm font-bold text-slate-700 underline-offset-4 decoration-2 transition hover:text-slate-950 hover:underline"
+          >
+            Read →
+          </a>
+        </div>
+
+        <a
+          href={`/newsletters/${latest.id}`}
+          class="block"
+          aria-label={`Read latest newsletter: ${latest.data.title}`}
+        >
+          <div class="polaroid-stack">
+            <figure class="polaroid polaroid-front">
+              <Image
+                src={latest.data.thumbnail}
+                alt={latest.data.thumbnailAlt || ""}
+                widths={[320, 576]}
+                sizes="(min-width: 1024px) 288px, 80vw"
+                loading="eager"
+                fetchpriority="high"
+              />
+              <figcaption class="polaroid-caption font-handwritten">
+                Our first newsletter
+              </figcaption>
+            </figure>
+          </div>
+        </a>
+      </section>
+    ) : (
+      <section class="py-12">
+        <h1 class="font-display text-4xl text-slate-950">Newsletters</h1>
+        <p class="mt-3 text-lg text-slate-700">The first issue is coming soon.</p>
+      </section>
+    )
+  }
+
+  <section id="newsletter-signup" class="border-b border-slate-200 pb-8" aria-labelledby="newsletter-archive-signup-heading">
+    <NewsletterSignupCard id="newsletter-archive-signup" />
+  </section>
+
+  <section aria-labelledby="archive-heading">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p class="text-sm font-extrabold uppercase tracking-wide text-primary-700">
+          Newsletter archive
+        </p>
+        <h2 id="archive-heading" class="mt-2 font-display text-4xl text-slate-950">
+          Past newsletters
+        </h2>
+        <p class="mt-2 text-slate-600">
+          {archive.length
+            ? "Browse every update from the EdTech-a-thon team."
+            : "More issues will appear here after the next send."}
+        </p>
+      </div>
+      {totalPages > 1 && (
+        <a
+          href="/newsletters/page/2"
+          class="text-sm font-bold text-slate-950 underline decoration-primary-300 decoration-2 underline-offset-4 hover:text-primary-700"
+        >
+          Next page →
+        </a>
+      )}
+    </div>
+
+    {cards.length > 0 && (
+      <div class="mt-6 grid gap-5 md:grid-cols-2">
+        {cards.map((newsletter) => <NewsletterCard newsletter={newsletter} />)}
+      </div>
+    )}
+  </section>
+</Layout>

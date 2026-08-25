@@ -52,6 +52,15 @@ const eventsOpen = isActive("/events");
             Solutions
           </a>
 
+          <a
+            href="/newsletters"
+            class={`py-1 text-slate-700 underline-offset-4 decoration-2 transition hover:text-slate-950 hover:underline ${
+              isActive("/newsletters") ? "font-bold text-slate-950 underline" : ""
+            }`}
+          >
+            Newsletter
+          </a>
+
           <details class="group relative">
             <summary
               class="group/summary flex cursor-pointer list-none items-center gap-1 py-1 text-slate-700 transition hover:text-slate-950 [&::-webkit-details-marker]:hidden"

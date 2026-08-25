@@ -17,4 +17,18 @@ const solutions = defineCollection({
     }),
 });
 
-export const collections = { solutions };
+const newsletters = defineCollection({
+  loader: glob({ base: "./src/content/newsletters", pattern: "**/*.md" }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      subject: z.string().default(""),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      preview: z.string(),
+      thumbnail: image(),
+      thumbnailAlt: z.string().default(""),
+      issueNumber: z.number().int().positive().optional(),
+    }),
+});
+
+export const collections = { solutions, newsletters };

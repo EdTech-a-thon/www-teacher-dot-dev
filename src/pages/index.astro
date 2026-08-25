@@ -1,12 +1,12 @@
 ---
 import { Image } from "astro:assets";
 import Layout from "../components/Layout.astro";
+import NewsletterSignupCard from "../components/NewsletterSignupCard.astro";
 import SolutionCarousel from "../components/SolutionCarousel.astro";
 import edtechathon2026Group from "../assets/edtechathon-2026-group.jpeg";
 import { getSolutionGallery } from "../lib/board";
 
 const solutionItems = (await getSolutionGallery()).slice(0, 8);
-
 const organizers = [
   {
     id: "josh-pullen",
@@ -101,7 +101,16 @@ const organizers = [
     </div>
   </section>
 
-  <SolutionCarousel items={solutionItems} />
+  <div>
+    <SolutionCarousel items={solutionItems} />
+
+    <section aria-labelledby="homepage-newsletter-heading">
+      <NewsletterSignupCard
+        id="homepage-newsletter"
+        title="Get updates in your inbox"
+      />
+    </section>
+  </div>
 
   <section aria-labelledby="organizers-heading">
     <h2 id="organizers-heading" class="font-display text-4xl text-slate-950">

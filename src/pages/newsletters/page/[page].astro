@@ -1,0 +1,90 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import Layout from "../../../components/Layout.astro";
+import NewsletterCard from "../../../components/NewsletterCard.astro";
+import NewsletterSignup from "../../../components/NewsletterSignup.astro";
+
+export async function getStaticPaths() {
+  const pageSize = 6;
+  const newsletters = (await getCollection("newsletters")).sort((a, b) =>
+    b.data.date.localeCompare(a.data.date),
+  );
+  const totalPages = Math.ceil(newsletters.length / pageSize);
+
+  return Array.from({ length: Math.max(totalPages - 1, 0) }, (_, index) => {
+    const pageNumber = index + 2;
+    const start = (pageNumber - 1) * pageSize;
+
+    return {
+      params: { page: String(pageNumber) },
+      props: {
+        pageNumber,
+        totalPages,
+        newsletters: newsletters.slice(start, start + pageSize),
+      },
+    };
+  });
+}
+
+interface Props {
+  pageNumber: number;
+  totalPages: number;
+  newsletters: CollectionEntry<"newsletters">[];
+}
+
+const { pageNumber, totalPages, newsletters } = Astro.props;
+const previousHref = pageNumber === 2 ? "/newsletters" : `/newsletters/page/${pageNumber - 1}`;
+const nextHref = pageNumber < totalPages ? `/newsletters/page/${pageNumber + 1}` : "";
+---
+
+<Layout
+  title={`Newsletters – Page ${pageNumber}`}
+  description="Browse the teacher.dev newsletter archive."
+  compactContent
+>
+  <section>
+    <a
+      href="/newsletters"
+      class="text-sm font-bold text-slate-700 underline decoration-primary-300 decoration-2 underline-offset-4 hover:text-primary-700"
+    >
+      ← Newsletter home
+    </a>
+
+    <div class="mt-6 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p class="text-sm font-extrabold uppercase tracking-wide text-primary-700">Newsletter archive</p>
+        <h1 class="mt-2 font-display text-4xl text-slate-950">
+          Past newsletters
+        </h1>
+        <p class="mt-2 text-slate-600">Page {pageNumber} of {totalPages}</p>
+      </div>
+      <div class="flex gap-3 text-sm font-bold">
+        <a
+          href={previousHref}
+          class="rounded-full border border-slate-300 px-4 py-2 text-slate-700 transition hover:border-primary-400 hover:bg-primary-50 hover:text-primary-900"
+        >
+          ← Previous
+        </a>
+        {nextHref && (
+          <a
+            href={nextHref}
+            class="rounded-full bg-primary-200 px-4 py-2 text-primary-900 transition hover:bg-primary-100"
+          >
+            Next →
+          </a>
+        )}
+      </div>
+    </div>
+
+    <div class="mt-8 grid gap-5 md:grid-cols-2">
+      {newsletters.map((newsletter) => <NewsletterCard newsletter={newsletter} />)}
+    </div>
+  </section>
+
+  <section class="border-t border-slate-200 pt-8">
+    <h2 class="text-2xl font-extrabold text-slate-950">Get the next issue</h2>
+    <div class="mt-4 max-w-2xl">
+      <NewsletterSignup id={`newsletter-archive-${pageNumber}`} />
+    </div>
+  </section>
+</Layout>

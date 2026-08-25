@@ -1,0 +1,117 @@
+---
+interface Props {
+  autofocus?: boolean;
+  compact?: boolean;
+  id: string;
+}
+
+const { autofocus = false, compact = false, id } = Astro.props;
+---
+
+<div class="flex flex-col gap-2" data-newsletter-signup>
+  <form
+    method="post"
+    action="https://wrench-bobsled.exe.xyz/subscribe"
+    class="flex flex-col gap-3 sm:flex-row"
+    data-newsletter-form
+  >
+    <label for={`${id}-email`} class="sr-only">Email address</label>
+    <input
+      id={`${id}-email`}
+      type="email"
+      name="email"
+      autocomplete="email"
+      placeholder="you@example.com"
+      required
+      autofocus={autofocus}
+      class="min-w-0 flex-1 rounded-full border border-slate-300 bg-white px-5 py-3 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+    />
+    <input
+      type="text"
+      name="website"
+      tabindex="-1"
+      autocomplete="off"
+      hidden
+    />
+    <button
+      type="submit"
+      class="inline-flex items-center justify-center rounded-full bg-primary-200 px-5 py-3 text-sm font-bold text-primary-900 transition hover:bg-primary-100 disabled:cursor-wait disabled:opacity-70"
+    >
+      Sign Up for Our Newsletter
+    </button>
+  </form>
+  <p
+    class:list={["text-sm text-slate-600", { "min-h-5": !compact }]}
+    aria-live="polite"
+    data-newsletter-status
+  >
+    {!compact && "Get updates about future events and the tools we build for educators."}
+  </p>
+</div>
+
+<script>
+  document.querySelectorAll("[data-newsletter-form]").forEach((form) => {
+    if (!(form instanceof HTMLFormElement) || form.dataset.enhanced === "true") return;
+    form.dataset.enhanced = "true";
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const emailInput = form.elements.namedItem("email");
+      const websiteInput = form.elements.namedItem("website");
+      const submitButton = form.querySelector("button[type='submit']");
+      const status = form
+        .closest("[data-newsletter-signup]")
+        ?.querySelector("[data-newsletter-status]");
+
+      if (!(emailInput instanceof HTMLInputElement)) return;
+
+      if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Signing Up…";
+      }
+      if (status instanceof HTMLElement) {
+        status.textContent = "Submitting your email…";
+        status.classList.remove("text-red-700", "text-primary-700");
+      }
+
+      try {
+        const body = new URLSearchParams({
+          email: emailInput.value,
+          website:
+            websiteInput instanceof HTMLInputElement ? websiteInput.value : "",
+        });
+        const response = await fetch(form.action, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Accept: "application/json",
+          },
+          body,
+        });
+        const result = await response.json();
+
+        if (!response.ok) throw new Error(result.message || "Unable to subscribe");
+
+        form.reset();
+        if (status instanceof HTMLElement) {
+          status.textContent = result.message;
+          status.classList.add("text-primary-700");
+        }
+      } catch (error) {
+        if (status instanceof HTMLElement) {
+          status.textContent =
+            error instanceof Error
+              ? error.message
+              : "Unable to subscribe. Please try again.";
+          status.classList.add("text-red-700");
+        }
+      } finally {
+        if (submitButton instanceof HTMLButtonElement) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Sign Up for Our Newsletter";
+        }
+      }
+    });
+  });
+</script>
