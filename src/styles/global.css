@@ -1,0 +1,177 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,700;1,700&family=Figtree:ital,wght@0,700;1,700&family=IBM+Plex+Sans:ital,wght@0,700;1,700&family=Inter:ital,wght@0,700;1,700&family=Plus+Jakarta+Sans:ital,wght@0,700;1,700&family=Public+Sans:wght@400;500;600;700;800&family=Sora:wght@500;600;700&family=Source+Sans+3:ital,wght@0,700;1,700&display=swap");
+
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: #f5feeb;
+  --color-primary-100: #e6fccf;
+  --color-primary-200: #aff04c;
+  --color-primary-300: #94ea3e;
+  --color-primary-400: #66cc00;
+  --color-primary-500: #6daa03;
+  --color-primary-600: #529e05;
+  --color-primary-700: #407c04;
+  --color-primary-800: #2e5705;
+  --color-primary-900: #1f3805;
+  --color-primary-950: #142404;
+
+  --color-slate-50: #f4f9fb;
+  --color-slate-100: #e8f2f5;
+  --color-slate-200: #cfe2e9;
+  --color-slate-300: #a0c1cd;
+  --color-slate-400: #81acbb;
+  --color-slate-500: #5991a6;
+  --color-slate-600: #457282;
+  --color-slate-700: #31525e;
+  --color-slate-800: #27454f;
+  --color-slate-900: #1e353e;
+  --color-slate-950: #122126;
+}
+
+:root {
+  color: var(--color-slate-950);
+  background: #fffdf8;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #fffdf8;
+  background-image:
+    linear-gradient(#cfe2e9 1px, transparent 1px),
+    linear-gradient(90deg, #cfe2e9 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+.font-display {
+  font-family: "Plus Jakarta Sans", "Public Sans", system-ui, sans-serif;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -0.04em;
+}
+
+.font-sora {
+  font-family: "Sora", "Public Sans", system-ui, sans-serif;
+}
+
+.font-jakarta {
+  font-family: "Plus Jakarta Sans", "Public Sans", system-ui, sans-serif;
+}
+
+.font-dm {
+  font-family: "DM Sans", "Public Sans", system-ui, sans-serif;
+}
+
+.font-figtree {
+  font-family: "Figtree", "Public Sans", system-ui, sans-serif;
+}
+
+.font-inter {
+  font-family: "Inter", "Public Sans", system-ui, sans-serif;
+}
+
+.font-plex {
+  font-family: "IBM Plex Sans", "Public Sans", system-ui, sans-serif;
+}
+
+.font-source {
+  font-family: "Source Sans 3", "Public Sans", system-ui, sans-serif;
+}
+
+.page-shell {
+  min-height: 100vh;
+  background: linear-gradient(
+    90deg,
+    rgb(254 253 246 / 0) 0,
+    rgb(254 253 246 / 0.92) 0.5rem,
+    #fefdf6 1rem,
+    #fefdf6 calc(100% - 1rem),
+    rgb(254 253 246 / 0.92) calc(100% - 0.5rem),
+    rgb(254 253 246 / 0) 100%
+  );
+}
+
+@media (min-width: 1024px) {
+  .page-shell {
+    background: linear-gradient(
+      90deg,
+      rgb(254 253 246 / 0) 0,
+      rgb(254 253 246 / 0.92) 2rem,
+      #fefdf6 4rem,
+      #fefdf6 calc(100% - 4rem),
+      rgb(254 253 246 / 0.92) calc(100% - 2rem),
+      rgb(254 253 246 / 0) 100%
+    );
+  }
+}
+
+.polaroid-stack {
+  position: relative;
+  width: min(100%, 18rem);
+  aspect-ratio: 360 / 416;
+  margin: 0 auto;
+  isolation: isolate;
+}
+
+.polaroid {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 0.75rem 3.25rem;
+  border: 1px solid rgb(129 172 187 / 0.45);
+  border-radius: 0.25rem;
+  background: #fffdf8;
+  box-shadow:
+    0 1.25rem 2.5rem rgb(18 33 38 / 0.18),
+    0 0.25rem 0 rgb(18 33 38 / 0.08);
+  transform-origin: 50% 80%;
+}
+
+.polaroid img {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--color-slate-300);
+  border-radius: 0.125rem;
+  background: var(--color-slate-100);
+  object-fit: cover;
+}
+
+.polaroid-back {
+  z-index: 1;
+  transform: translate(-1.15rem, 0.95rem) rotate(-8deg);
+}
+
+.polaroid-middle {
+  z-index: 2;
+  transform: translate(1rem, 0.6rem) rotate(6deg);
+}
+
+.polaroid-front {
+  z-index: 3;
+  transform: rotate(-2deg);
+}

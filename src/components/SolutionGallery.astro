@@ -1,0 +1,248 @@
+---
+import type { GalleryItem } from "../lib/board";
+import { Image } from "astro:assets";
+
+interface Props {
+  items: GalleryItem[];
+}
+
+const { items } = Astro.props;
+const modalItems = items.map((item) => ({
+  ...item,
+  screenshot: item.screenshot
+    ? {
+        src: item.screenshot.src,
+        width: item.screenshot.width,
+        height: item.screenshot.height,
+      }
+    : null,
+}));
+const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
+---
+
+{
+  items.length === 0 ? (
+    <p class="py-8 text-center italic text-slate-500">
+      No completed solutions yet — check back during the event.
+    </p>
+  ) : (
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {items.map((item) => (
+        <button
+          type="button"
+          data-solution-open={item.key}
+          class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-1 hover:border-primary-300 hover:shadow-xl"
+        >
+          <div class="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-primary-200 to-primary-400">
+            {item.videoThumb ? (
+              <img
+                src={item.videoThumb}
+                alt=""
+                loading="lazy"
+                class="h-full w-full object-cover transition group-hover:scale-105"
+              />
+            ) : item.screenshot ? (
+              <Image
+                src={item.screenshot}
+                alt={`${item.name} screenshot`}
+                widths={[480, 720]}
+                sizes="(min-width: 1024px) 280px, (min-width: 640px) 45vw, 90vw"
+                loading="lazy"
+                class="h-full w-full object-cover transition group-hover:scale-105"
+              />
+            ) : (
+              <div class="flex h-full w-full items-center justify-center p-4 text-center font-display text-xl text-primary-950">
+                {item.name}
+              </div>
+            )}
+            {item.videoEmbed && (
+              <div class="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/20">
+                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 opacity-0 shadow-lg transition group-hover:opacity-100">
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="ml-0.5 h-5 w-5 fill-primary-700"
+                    aria-hidden="true"
+                  >
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </span>
+              </div>
+            )}
+          </div>
+          <div class="flex grow flex-col gap-1 p-4">
+            <h2 class="text-lg font-bold leading-snug text-slate-900">
+              {item.name}
+            </h2>
+            {item.oneLiner && (
+              <p class="line-clamp-2 text-sm text-slate-600">
+                {item.oneLiner}
+              </p>
+            )}
+            {item.builtBy && (
+              <p class="mt-auto pt-2 text-xs text-slate-500">
+                Built by {item.builtBy}
+              </p>
+            )}
+          </div>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+{
+  items.length > 0 && (
+    <>
+      <script
+        id="solution-gallery-data"
+        type="application/json"
+        set:html={modalJson}
+      />
+      <div
+        data-solution-modal
+        class="fixed inset-0 z-50 hidden items-start justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm sm:items-center"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Solution details"
+        tabindex="-1"
+      >
+        <div
+          data-solution-modal-document
+          class="my-8 w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+          role="document"
+        >
+          <div data-solution-media />
+          <div class="p-5 sm:p-6">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <h2
+                  data-solution-title
+                  class="text-2xl font-extrabold text-slate-900"
+                />
+                <p data-solution-meta class="mt-0.5 text-sm text-slate-500" />
+              </div>
+              <button
+                type="button"
+                data-solution-close
+                aria-label="Close"
+                class="shrink-0 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-900"
+              >
+                <svg viewBox="0 0 24 24" class="h-6 w-6" aria-hidden="true">
+                  <path
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    d="M6 6l12 12M18 6L6 18"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div
+              data-solution-description
+              class="modal-description mt-4 text-sm leading-relaxed text-slate-700"
+            />
+            <div data-solution-actions class="mt-6 flex flex-wrap gap-3" />
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+<script>
+  const dataEl = document.getElementById("solution-gallery-data");
+  const modal = document.querySelector("[data-solution-modal]");
+  const modalDocument = document.querySelector("[data-solution-modal-document]");
+  const media = document.querySelector("[data-solution-media]");
+  const title = document.querySelector("[data-solution-title]");
+  const meta = document.querySelector("[data-solution-meta]");
+  const description = document.querySelector("[data-solution-description]");
+  const actions = document.querySelector("[data-solution-actions]");
+  const closeButton = document.querySelector("[data-solution-close]");
+  const items = dataEl ? JSON.parse(dataEl.textContent || "[]") : [];
+  const byKey = new Map(items.map((item) => [item.key, item]));
+
+  function closeSolution() {
+    if (!(modal instanceof HTMLElement)) return;
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+    document.body.style.overflow = "";
+  }
+
+  function openSolution(key) {
+    const item = byKey.get(key);
+    if (!item || !(modal instanceof HTMLElement)) return;
+
+    if (media instanceof HTMLElement) {
+      if (item.videoEmbed) {
+        media.innerHTML = `<div class="aspect-video w-full bg-black"><iframe src="${item.videoEmbed}" title="${item.name} showcase video" class="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+      } else if (item.screenshot) {
+        media.innerHTML = `<div class="aspect-video w-full overflow-hidden bg-slate-100"><img src="${item.screenshot.src}" alt="${item.name} screenshot" width="${item.screenshot.width}" height="${item.screenshot.height}" class="h-full w-full object-cover" /></div>`;
+      } else {
+        media.innerHTML = "";
+      }
+    }
+
+    if (title instanceof HTMLElement) title.textContent = item.name;
+    if (meta instanceof HTMLElement) {
+      meta.textContent = [item.builtBy ? `Built by ${item.builtBy}` : "", item.date]
+        .filter(Boolean)
+        .join(" • ");
+    }
+    if (description instanceof HTMLElement) {
+      description.innerHTML = item.descriptionHtml || item.oneLiner || "";
+    }
+    if (actions instanceof HTMLElement) {
+      actions.innerHTML = item.link
+        ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500">Visit solution <span aria-hidden="true">&rarr;</span></a>`
+        : "";
+    }
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    document.body.style.overflow = "hidden";
+  }
+
+  document.addEventListener("click", (event) => {
+    if (!(event instanceof MouseEvent) || event.button !== 0) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+    const trigger = event.target.closest("[data-solution-open]");
+    if (trigger instanceof HTMLElement) {
+      event.preventDefault();
+      openSolution(trigger.dataset.solutionOpen);
+    }
+  });
+
+  closeButton?.addEventListener("click", closeSolution);
+  modal?.addEventListener("click", closeSolution);
+  modalDocument?.addEventListener("click", (event) => event.stopPropagation());
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeSolution();
+  });
+</script>
+
+<style>
+  :global(.modal-description > * + *) {
+    margin-top: 0.75rem;
+  }
+
+  :global(.modal-description ul),
+  :global(.modal-description ol) {
+    padding-left: 1.25rem;
+  }
+
+  :global(.modal-description ul) {
+    list-style: disc;
+  }
+
+  :global(.modal-description ol) {
+    list-style: decimal;
+  }
+
+  :global(.modal-description a) {
+    color: var(--color-primary-700);
+    text-decoration: underline;
+  }
+</style>

@@ -1,0 +1,85 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  compactContent?: boolean;
+}
+
+const {
+  title,
+  description = "teacher.dev makes tools for teachers that solve real classroom problems.",
+  compactContent = false,
+} = Astro.props;
+
+const pageGap = compactContent ? "gap-8" : "gap-12 sm:gap-16 md:gap-20";
+const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
+const isActive = (href: string) =>
+  currentPath === href || currentPath.startsWith(`${href}/`);
+const eventsOpen = isActive("/events");
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#fffdf8" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title ? `${title} – teacher.dev` : "teacher.dev"}</title>
+  </head>
+  <body class="text-slate-950">
+    <main
+      class={`page-shell mx-auto flex min-h-screen w-full max-w-5xl flex-col ${pageGap} px-4 py-6 sm:px-8 lg:px-20`}
+    >
+      <header
+        class="flex flex-col gap-5 border-b border-slate-200 pb-6 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <a href="/" class="flex w-fit items-center gap-3" aria-label="teacher.dev home">
+          <img src="/favicon.svg" alt="" class="h-12 w-12" />
+          <span class="font-display text-4xl text-slate-950">teacher.dev</span>
+        </a>
+
+        <nav class="flex flex-wrap items-center gap-6 text-sm font-semibold sm:justify-end">
+          <a
+            href="/solutions"
+            class={`py-1 text-slate-700 underline-offset-4 decoration-2 transition hover:text-slate-950 hover:underline ${
+              isActive("/solutions") ? "font-bold text-slate-950 underline" : ""
+            }`}
+          >
+            Solutions
+          </a>
+
+          <details class="group relative">
+            <summary
+              class={`flex cursor-pointer list-none items-center gap-1 py-1 text-slate-700 underline-offset-4 decoration-2 transition hover:text-slate-950 hover:underline [&::-webkit-details-marker]:hidden ${
+                eventsOpen ? "font-bold text-slate-950 underline" : ""
+              }`}
+            >
+              Events
+              <span class="text-xs transition group-open:rotate-180" aria-hidden="true">▾</span>
+            </summary>
+            <div
+              class="absolute right-0 z-20 mt-3 w-56 bg-[#fffdf8] py-2 text-slate-700 shadow-lg"
+            >
+              <a
+                href="/events/edtech-a-thon-2026"
+                class={`block px-3 py-2 underline-offset-4 decoration-2 transition hover:text-slate-950 hover:underline ${
+                  isActive("/events/edtech-a-thon-2026")
+                    ? "font-bold text-slate-950 underline"
+                    : ""
+                }`}
+              >
+                EdTech-a-thon 2026
+              </a>
+            </div>
+          </details>
+        </nav>
+      </header>
+
+      <slot />
+    </main>
+  </body>
+</html>

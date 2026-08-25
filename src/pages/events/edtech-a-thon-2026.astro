@@ -1,0 +1,248 @@
+---
+import { Image } from "astro:assets";
+import Layout from "../../components/Layout.astro";
+import edtechathon2026Group from "../../assets/edtechathon-2026-group.jpeg";
+
+const scheduleDays = [
+  {
+    label: "Day 1",
+    date: "Monday, July 20",
+    times: "10:00 AM – 12:00 PM ET",
+    focus: "Community kickoff + educator problem sharing",
+    sessions: [
+      "Welcome to EdTech-a-thon",
+      "Educator Lightning Talks",
+      "Educator Pair & Share",
+    ],
+  },
+  {
+    label: "Day 2",
+    date: "Tuesday, July 21",
+    times: "10:00 AM – 12:00 PM ET",
+    focus: "AI literacy + hands-on building",
+    sessions: [
+      "Development progress update",
+      "Artificial Intelligence 101",
+      "Vibe Coding Workshop",
+    ],
+  },
+  {
+    label: "Day 3",
+    date: "Wednesday, July 22",
+    times: "2:00 PM – 4:00 PM ET",
+    focus: "Demos, feedback, and next steps",
+    sessions: ["Team Presentations", "Gallery Walk", "Closing Remarks"],
+  },
+];
+
+const faqs = [
+  {
+    question: "Was there an option to participate virtually?",
+    answer:
+      "Yes. Workshops and networking sessions ran virtually over Zoom, with limited in-person capacity in Atlanta, GA.",
+  },
+  {
+    question: "Was there a cost to attend?",
+    answer: "No. EdTech-a-thon 2026 was completely free to attend.",
+  },
+  {
+    question: "Did participants need to bring a team?",
+    answer:
+      "No. Teachers and developers could join solo, meet collaborators, and contribute for as many sessions as they were able to attend.",
+  },
+];
+
+---
+
+<Layout
+  title="EdTech-a-thon 2026"
+  description="EdTech-a-thon 2026 paired teachers and developers for three days of classroom problem solving."
+>
+  <section class="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-center">
+    <div class="flex flex-col gap-5">
+      <p class="text-xl uppercase text-slate-600">
+        Real teachers. Real problems. Real solutions.
+      </p>
+      <h1 class="text-4xl font-semibold text-slate-900">
+        Pairing teachers with developers for a 3-day problem-solving marathon
+      </h1>
+      <p class="text-lg leading-8 text-slate-700">
+        Teachers and developers live in different worlds. We brought them
+        together from July 20–22, virtually and in-person in Atlanta, GA, for
+        three days of collaboration, community, and problem solving.
+      </p>
+      <div class="flex flex-col gap-3 sm:flex-row">
+        <a
+          href="/solutions"
+          class="inline-flex items-center justify-center rounded-full bg-primary-200 px-5 py-3 text-sm font-bold text-primary-900 transition hover:bg-primary-100"
+        >
+          View Solutions
+        </a>
+        <a
+          href="#schedule"
+          class="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-primary-400 hover:bg-primary-50 hover:text-primary-900"
+        >
+          See Schedule Summary
+        </a>
+      </div>
+    </div>
+    <div
+      class="polaroid-stack"
+      aria-label="Teachers and developers collaborating"
+    >
+      <figure class="polaroid polaroid-back" aria-hidden="true">
+        <img src="/hero-3.jpg" alt="" />
+      </figure>
+      <figure class="polaroid polaroid-middle" aria-hidden="true">
+        <img src="/hero-2.jpg" alt="" />
+      </figure>
+      <figure class="polaroid polaroid-front">
+        <Image
+          src={edtechathon2026Group}
+          alt="EdTech-a-thon 2026 participants gathered in Atlanta with virtual attendees joining onscreen"
+          width={576}
+          widths={[320, 576]}
+          sizes="(min-width: 1024px) 336px, 288px"
+          loading="eager"
+          fetchpriority="high"
+        />
+      </figure>
+    </div>
+  </section>
+
+  <section id="schedule" class="border-t border-slate-200 pt-10">
+    <div class="flex flex-col gap-3">
+      <p class="text-sm font-extrabold uppercase tracking-wide text-primary-700">
+        Schedule Summary
+      </p>
+      <h2 class="font-display text-4xl text-slate-950">Three days, day by day</h2>
+      <p class="max-w-2xl text-lg leading-8 text-slate-700">
+        The event mixed educator-led problem discovery, practical workshops, and
+        solution demos so every tool could be shaped by real classroom feedback.
+      </p>
+    </div>
+
+    <div class="mt-6 grid gap-5 lg:grid-cols-3">
+      {
+        scheduleDays.map((day) => (
+          <article class="flex flex-col rounded-lg border border-slate-400 border-b-4 bg-white">
+            <div class="flex flex-1 flex-col p-6">
+              <p class="text-sm font-extrabold uppercase tracking-wide text-primary-700">
+                {day.label}
+              </p>
+              <h3 class="mt-2 text-2xl font-extrabold text-slate-950">
+                {day.date}
+              </h3>
+              <p class="mt-1 text-sm font-bold text-slate-600">{day.times}</p>
+              <p class="mt-4 text-base font-semibold leading-7 text-slate-900">
+                {day.focus}
+              </p>
+              <ul class="mt-4 space-y-2 text-base leading-7 text-slate-700">
+                {day.sessions.map((session) => (
+                  <li class="flex gap-2">
+                    <span class="text-primary-700" aria-hidden="true">•</span>
+                    <span>{session}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section
+    class="border-t border-slate-200 pt-10"
+    aria-labelledby="why-attend-heading"
+  >
+    <h2 id="why-attend-heading" class="font-display text-4xl text-slate-950">
+      Why attend?
+    </h2>
+    <div
+      class="mt-6 grid rounded-lg border border-slate-400 border-b-4 bg-white lg:grid-cols-2"
+    >
+      <article
+        class="border-b border-dashed border-slate-400 p-6 lg:border-b-0 lg:border-r"
+      >
+        <h3 class="text-sm font-extrabold uppercase text-slate-950">
+          For teachers, we solve real struggles
+        </h3>
+        <div class="mt-5 space-y-5 text-base leading-7 text-slate-700">
+          <p>
+            Every day, teachers are being sold on the next big thing. Somebody
+            else, far away from the classroom, claims to know what's best for
+            your students.
+          </p>
+          <p>
+            We don't believe in that. EdTech-a-thon gathered real problems from
+            the people actually in classrooms and built solutions steered by
+            teacher feedback the entire time.
+          </p>
+        </div>
+      </article>
+
+      <article class="p-6">
+        <h3 class="text-sm font-extrabold uppercase text-slate-950">
+          For developers, unmatched feedback
+        </h3>
+        <div class="mt-5 space-y-5 text-base leading-7 text-slate-700">
+          <p>
+            Building EdTech is fun, but teachers are notoriously difficult to
+            reach. At EdTech-a-thon, developers tested ideas with real teachers
+            throughout the event.
+          </p>
+          <p>
+            The best solutions are built with tight feedback loops and users who
+            will say whether their needs are actually being met.
+          </p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="border-t border-slate-200 pt-10">
+    <div class="rounded-lg border border-slate-400 border-b-4 bg-white p-6">
+      <p class="text-sm font-extrabold uppercase tracking-wide text-primary-700">
+        What came out of it
+      </p>
+      <h2 class="mt-2 text-3xl font-extrabold text-slate-950">
+        Classroom tools shaped by classroom expertise
+      </h2>
+      <p class="mt-3 max-w-3xl text-base leading-7 text-slate-700">
+        Our success is measured by the number of problems solved for teachers,
+        recognizing that every problem solved is a win for teachers. The
+        solutions from EdTech-a-thon 2026 are being collected into the
+        teacher.dev solution gallery.
+      </p>
+      <a
+        href="/solutions"
+        class="mt-5 inline-flex items-center justify-center rounded-full bg-primary-200 px-5 py-3 text-sm font-bold text-primary-900 transition hover:bg-primary-100"
+      >
+        Go to Solutions
+      </a>
+    </div>
+  </section>
+
+  <section class="border-t border-slate-200 pt-10" aria-labelledby="faq-heading">
+    <h2 id="faq-heading" class="font-display text-4xl text-slate-950">FAQ</h2>
+    <div class="mt-6 divide-y divide-slate-200 border-y border-slate-200">
+      {
+        faqs.map((faq) => (
+          <details class="group py-5">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-6 text-left text-base font-bold text-slate-950">
+              <span>{faq.question}</span>
+              <span class="text-2xl font-normal leading-none text-slate-400 transition group-open:rotate-45">
+                +
+              </span>
+            </summary>
+            <p class="mt-3 max-w-3xl text-base leading-7 text-slate-700">
+              {faq.answer}
+            </p>
+          </details>
+        ))
+      }
+    </div>
+  </section>
+
+</Layout>

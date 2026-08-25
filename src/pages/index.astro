@@ -1,0 +1,152 @@
+---
+import { Image } from "astro:assets";
+import Layout from "../components/Layout.astro";
+import SolutionCarousel from "../components/SolutionCarousel.astro";
+import edtechathon2026Group from "../assets/edtechathon-2026-group.jpeg";
+import { getSolutionGallery } from "../lib/board";
+
+const solutionItems = (await getSolutionGallery()).slice(0, 8);
+
+const organizers = [
+  {
+    id: "josh-pullen",
+    name: "Josh Pullen",
+    headshot: "/Josh.png",
+    siteLabel: "joshuapullen.com",
+    siteHref: "https://www.joshuapullen.com/",
+    blurb:
+      "An Algebra teacher and web developer from South Lyon, Michigan, Josh Pullen builds practical EdTech solutions for his classroom and shares them with other teachers. He has developed interactive math lessons for 3Blue1Brown and is the creator of Shuffle Buddy, a specialized seating chart generator. Josh's work provides simple, effective tools that solve the day-to-day challenges teachers actually face.",
+  },
+  {
+    id: "jessika-golab",
+    name: "Jessika Golab",
+    headshot: "/Jess.png",
+    // siteLabel: 'msgolab.com',
+    // siteHref: 'https://www.msgolab.com/',
+    blurb:
+      "A middle school math teacher in Walled Lake, MI, Jessika Golab is a passionate supporter and advocate for her students. Jessika’s classroom is adorned with a wall of over 250 rubber and plastic ducks, each one a gift from a student who appreciates her fun and caring presence. Jessika leads her school’s WEB program, where she trains 8th grade leaders to provide mentorship and support to every 6th grade student as they step into middle school life for the first time.",
+  },
+  {
+    id: "duncan-johnson",
+    name: "Duncan Johnson",
+    headshot: "/Duncan.png",
+    siteLabel: "duncanajohnson.com",
+    siteHref: "https://www.duncanajohnson.com/",
+    blurb:
+      "An EdTech researcher and designer from Boston, Massachusetts, Duncan Johnson builds educational technology for universities and companies alike. He previously co-founded a STEM education non-profit with Elliot Roe and has published computer science education research with the Tufts University Center for Engineering Education and Outreach.",
+  },
+  {
+    id: "elliot-roe",
+    name: "Elliot Roe",
+    headshot: "/Elliot.png",
+    siteLabel: "elliotbroe.com",
+    siteHref: "https://elliotbroe.com/",
+    blurb:
+      "A full-time software engineer from Atlanta, Georgia, Elliot Roe is passionate about open-source software and educational technology. He previously co-founded a STEM education non-profit with Duncan Johnson and worked as a research assistant at the Play and Learn Lab, where he developed educational games and supported after-school programs. Now, Elliot develops open-source tooling for researchers, integrating academic literature with AI.",
+  },
+  {
+    id: "sam-barans",
+    name: "Sam Barans",
+    headshot: "/Sam.png",
+    blurb:
+      "A data analyst in the early care and education space, Sam got started building data analytic pipelines and reports for foster care and early psychosis care systems focused on harm reduction and prevention. Throughout HS and college, Sam tutored at Mathnasium for 8 years and TA’d calculus and algebra at Michigan State. Sam’s passion for increasing access to education comes from watching his brother struggle to receive necessary accommodations in school and mentoring youth involved in the juvenile court system.",
+  },
+  {
+    id: "auden-garrard",
+    name: "Auden Garrard",
+    headshot: "/Auden.png",
+    blurb:
+      "A PhD student at University of Alabama studying Computer Science, Auden’s interest is primarily in multi-objective optimization. He most recently worked with the Environmental Protection Agency to develop methods for protecting the Chesapeake Bay Watershed. Prior to starting his PhD, he tutored a wide of range math and computer science courses at Michigan State University as well as Lansing Community College. Auden plans to enter higher education with a goal of increasing access to STEM fields for underrepresented groups.",
+  },
+];
+---
+
+<Layout>
+  <section class="flex flex-col items-center gap-10 py-8 text-center">
+    <div class="mx-auto flex max-w-3xl flex-col items-center gap-5">
+      <h1 class="text-xl uppercase text-slate-600">
+        We're a non-profit guided by one simple principle
+      </h1>
+      <p class="text-4xl font-semibold text-slate-900 sm:text-5xl">
+        Teachers Deserve Better.
+      </p>
+      <p class="max-w-2xl text-lg leading-8 text-slate-700">
+        We make tools for teachers that solve real classroom problems.
+      </p>
+    </div>
+    <div
+      class="polaroid-stack"
+      aria-label="Teachers and developers collaborating"
+    >
+      <figure class="polaroid polaroid-back" aria-hidden="true">
+        <img src="/hero-3.jpg" alt="" />
+      </figure>
+      <figure class="polaroid polaroid-middle" aria-hidden="true">
+        <img src="/hero-2.jpg" alt="" />
+      </figure>
+      <figure class="polaroid polaroid-front">
+        <Image
+          src={edtechathon2026Group}
+          alt="Teachers and developers gathered together with virtual attendees joining onscreen"
+          width={576}
+          widths={[320, 576]}
+          sizes="(min-width: 1024px) 336px, 288px"
+          loading="eager"
+          fetchpriority="high"
+        />
+      </figure>
+    </div>
+  </section>
+
+  <SolutionCarousel items={solutionItems} />
+
+  <section aria-labelledby="organizers-heading">
+    <h2 id="organizers-heading" class="font-display text-4xl text-slate-950">
+      Our Team
+    </h2>
+    <p class="mt-2">
+      EdTech-a-thon is organized by an amazing team of teachers and developers
+      passionate about helping teachers. We're backed by <a
+        class="underline"
+        href="https://bxcoding.org">BX Coding</a
+      >, a 501(c)(3) education non-profit, which allows EdTech-a-thon to be
+      wholly commited to providing free & accessible resources for teachers.
+    </p>
+    <div class="mt-8 divide-y divide-slate-200 border-y border-slate-200">
+      {
+        organizers.map((organizer) => (
+          <article
+            id={organizer.id}
+            class="grid gap-5 py-6 sm:grid-cols-[96px_1fr]"
+          >
+            <img
+              src={organizer.headshot}
+              alt={`${organizer.name} headshot`}
+              class="h-[150px] rounded-lg border border-dashed border-slate-400 object-cover"
+            />
+            <div>
+              <div class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                <h3 class="text-2xl font-extrabold text-slate-950">
+                  {organizer.name}
+                </h3>
+                {organizer.siteHref && (
+                  <a
+                    href={organizer.siteHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    class="text-xs font-bold uppercase text-slate-500 transition hover:text-slate-950"
+                  >
+                    {organizer.siteLabel}
+                  </a>
+                )}
+              </div>
+              <p class="mt-3 text-base leading-7 text-slate-700">
+                {organizer.blurb}
+              </p>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+</Layout>
