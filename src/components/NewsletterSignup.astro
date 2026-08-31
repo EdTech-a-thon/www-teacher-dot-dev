@@ -48,7 +48,8 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY?.trim();
           class="cf-turnstile w-full max-w-[300px]"
           data-sitekey={turnstileSiteKey}
           data-action="newsletter_signup"
-          data-appearance="interaction-only"
+          data-appearance="execute"
+          data-execution="execute"
           data-size="flexible"
           data-theme="light"
           data-newsletter-turnstile
@@ -74,7 +75,8 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY?.trim();
   }
 
   function waitForTurnstileToken(form: HTMLFormElement) {
-    if (!form.querySelector("[data-newsletter-turnstile]")) {
+    const widget = form.querySelector("[data-newsletter-turnstile]");
+    if (!(widget instanceof HTMLElement)) {
       return Promise.reject(new Error("Newsletter signup is not configured."));
     }
 
@@ -83,6 +85,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY?.trim();
 
     return new Promise<string>((resolve, reject) => {
       const deadline = Date.now() + turnstileWaitMs;
+      let challengeStarted = false;
 
       function checkForToken() {
         const token = readTurnstileToken(form);
@@ -91,6 +94,15 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY?.trim();
         } else if (Date.now() >= deadline) {
           reject(new Error("Verification timed out. Please try again."));
         } else {
+          const turnstile = Reflect.get(window, "turnstile");
+          if (
+            !challengeStarted &&
+            turnstile &&
+            typeof turnstile.execute === "function"
+          ) {
+            turnstile.execute(widget);
+            challengeStarted = true;
+          }
           window.requestAnimationFrame(checkForToken);
         }
       }
