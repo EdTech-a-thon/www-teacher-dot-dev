@@ -6,26 +6,35 @@ interface Props {
 }
 
 const { autofocus = false, compact = false, id } = Astro.props;
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY?.trim();
 ---
 
 <div class="flex flex-col gap-2" data-newsletter-signup>
   <form
     method="post"
     action="https://wrench-bobsled.exe.xyz/subscribe"
-    class="flex flex-col gap-3 sm:flex-row"
+    class="flex flex-col gap-3"
     data-newsletter-form
   >
-    <label for={`${id}-email`} class="sr-only">Email address</label>
-    <input
-      id={`${id}-email`}
-      type="email"
-      name="email"
-      autocomplete="email"
-      placeholder="you@example.com"
-      required
-      autofocus={autofocus}
-      class="min-w-0 flex-1 rounded-full border border-slate-300 bg-white px-5 py-3 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
-    />
+    <div class="flex flex-col gap-3 sm:flex-row">
+      <label for={`${id}-email`} class="sr-only">Email address</label>
+      <input
+        id={`${id}-email`}
+        type="email"
+        name="email"
+        autocomplete="email"
+        placeholder="you@example.com"
+        required
+        autofocus={autofocus}
+        class="min-w-0 flex-1 rounded-full border border-slate-300 bg-white px-5 py-3 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+      />
+      <button
+        type="submit"
+        class="inline-flex items-center justify-center rounded-full bg-primary-200 px-5 py-3 text-sm font-bold text-primary-900 transition hover:bg-primary-100 disabled:cursor-wait disabled:opacity-70"
+      >
+        Sign Up for Our Newsletter
+      </button>
+    </div>
     <input
       type="text"
       name="website"
@@ -33,12 +42,19 @@ const { autofocus = false, compact = false, id } = Astro.props;
       autocomplete="off"
       hidden
     />
-    <button
-      type="submit"
-      class="inline-flex items-center justify-center rounded-full bg-primary-200 px-5 py-3 text-sm font-bold text-primary-900 transition hover:bg-primary-100 disabled:cursor-wait disabled:opacity-70"
-    >
-      Sign Up for Our Newsletter
-    </button>
+    {
+      turnstileSiteKey && (
+        <div
+          class="cf-turnstile w-full max-w-[300px]"
+          data-sitekey={turnstileSiteKey}
+          data-action="newsletter_signup"
+          data-appearance="interaction-only"
+          data-size="flexible"
+          data-theme="light"
+          data-newsletter-turnstile
+        />
+      )
+    }
   </form>
   <p
     class:list={["text-sm text-slate-600", { "min-h-5": !compact }]}
@@ -50,6 +66,52 @@ const { autofocus = false, compact = false, id } = Astro.props;
 </div>
 
 <script>
+  const turnstileWaitMs = 60_000;
+
+  function readTurnstileToken(form: HTMLFormElement) {
+    const tokenInput = form.elements.namedItem("cf-turnstile-response");
+    return tokenInput instanceof HTMLInputElement ? tokenInput.value : "";
+  }
+
+  function waitForTurnstileToken(form: HTMLFormElement) {
+    if (!form.querySelector("[data-newsletter-turnstile]")) {
+      return Promise.reject(new Error("Newsletter signup is not configured."));
+    }
+
+    const existingToken = readTurnstileToken(form);
+    if (existingToken) return Promise.resolve(existingToken);
+
+    return new Promise<string>((resolve, reject) => {
+      const deadline = Date.now() + turnstileWaitMs;
+
+      function checkForToken() {
+        const token = readTurnstileToken(form);
+        if (token) {
+          resolve(token);
+        } else if (Date.now() >= deadline) {
+          reject(new Error("Verification timed out. Please try again."));
+        } else {
+          window.requestAnimationFrame(checkForToken);
+        }
+      }
+
+      checkForToken();
+    });
+  }
+
+  function resetTurnstile(form: HTMLFormElement) {
+    const widget = form.querySelector("[data-newsletter-turnstile]");
+    const turnstile = Reflect.get(window, "turnstile");
+
+    if (
+      widget instanceof HTMLElement &&
+      turnstile &&
+      typeof turnstile.reset === "function"
+    ) {
+      turnstile.reset(widget);
+    }
+  }
+
   document.querySelectorAll("[data-newsletter-form]").forEach((form) => {
     if (!(form instanceof HTMLFormElement) || form.dataset.enhanced === "true") return;
     form.dataset.enhanced = "true";
@@ -71,15 +133,21 @@ const { autofocus = false, compact = false, id } = Astro.props;
         submitButton.textContent = "Signing Up…";
       }
       if (status instanceof HTMLElement) {
-        status.textContent = "Submitting your email…";
+        status.textContent = "Checking your browser…";
         status.classList.remove("text-red-700", "text-primary-700");
       }
 
       try {
+        const turnstileToken = await waitForTurnstileToken(form);
+        if (status instanceof HTMLElement) {
+          status.textContent = "Submitting your email…";
+        }
+
         const body = new URLSearchParams({
           email: emailInput.value,
           website:
             websiteInput instanceof HTMLInputElement ? websiteInput.value : "",
+          "cf-turnstile-response": turnstileToken,
         });
         const response = await fetch(form.action, {
           method: "POST",
@@ -107,6 +175,7 @@ const { autofocus = false, compact = false, id } = Astro.props;
           status.classList.add("text-red-700");
         }
       } finally {
+        resetTurnstile(form);
         if (submitButton instanceof HTMLButtonElement) {
           submitButton.disabled = false;
           submitButton.textContent = "Sign Up for Our Newsletter";

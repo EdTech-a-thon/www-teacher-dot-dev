@@ -18,6 +18,7 @@ const cfBeaconToken = import.meta.env.CF_BEACON?.trim();
 const cfBeaconConfig = cfBeaconToken
   ? JSON.stringify({ token: cfBeaconToken })
   : undefined;
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY?.trim();
 const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
 const isActive = (href: string) =>
   currentPath === href || currentPath.startsWith(`${href}/`);
@@ -32,6 +33,16 @@ const eventsOpen = isActive("/events");
     <meta name="theme-color" content="#fffdf8" />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {
+      turnstileSiteKey && (
+        <script
+          is:inline
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+          async
+          defer
+        />
+      )
+    }
     {
       cfBeaconConfig && (
         <script
