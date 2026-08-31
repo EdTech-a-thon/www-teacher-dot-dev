@@ -62,7 +62,9 @@ const latestDate = latest
                 fetchpriority="high"
               />
               <figcaption class="polaroid-caption font-handwritten">
-                Our first newsletter
+                {latest.data.issueNumber
+                  ? `Issue #${latest.data.issueNumber}`
+                  : "Latest newsletter"}
               </figcaption>
             </figure>
           </div>
