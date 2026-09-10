@@ -1,0 +1,173 @@
+---
+import Layout from "../../components/Layout.astro";
+import NewsletterSignupCard from "../../components/NewsletterSignupCard.astro";
+import {
+  CALENDAR_WEEKDAYS,
+  getCalendarMonths,
+  getDailyEntries,
+} from "../../lib/daily";
+
+const entries = await getDailyEntries();
+const latest = entries[0];
+const months = getCalendarMonths(entries);
+---
+
+<Layout
+  title="Every Day"
+  description="teacher.dev solves one teacher's problem every single day. Look back through every day and watch the Instagram Reels."
+  compactContent
+>
+  <section class="grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
+    <div class="flex flex-col gap-4">
+      <p class="text-sm font-extrabold uppercase tracking-wide text-primary-700">
+        One teacher's problem
+      </p>
+      <h1 class="font-display text-4xl text-slate-950 sm:text-5xl">
+        Solved every single day.
+      </h1>
+      <p class="max-w-2xl text-lg leading-8 text-slate-700">
+        Some days it's a brand-new tool, others
+        it's an improvement to one teachers already use. Scroll through
+        every day below.
+      </p>
+    </div>
+    {
+      latest && (
+        <a
+          href={`/daily/${latest.id}`}
+          class="flex w-fit flex-col items-center rounded-lg border border-slate-400 border-b-4 bg-primary-200 px-8 py-5 text-primary-950 transition hover:bg-primary-300"
+          aria-label={`We're on day ${latest.day}. See the latest reel.`}
+        >
+          <span class="text-xs font-extrabold uppercase tracking-widest">
+            We're on day
+          </span>
+          <span class="font-display text-7xl leading-none">{latest.day}</span>
+        </a>
+      )
+    }
+  </section>
+
+  {
+    months.length === 0 ? (
+      <p class="py-8 text-center italic text-slate-500">
+        Day 1 is coming soon — check back tomorrow.
+      </p>
+    ) : (
+      months.map((month) => (
+        <section
+          aria-labelledby={`month-${month.key}`}
+          class="grid gap-6 border-t border-slate-200 pt-8 md:grid-cols-[16rem_1fr] md:gap-10"
+        >
+          <div class="md:sticky md:top-6 md:self-start">
+            <h2
+              id={`month-${month.key}`}
+              class="font-display text-3xl text-slate-950"
+            >
+              {month.label}
+            </h2>
+            <p class="mt-1 text-sm text-slate-600">
+              {month.entries.length}{" "}
+              {month.entries.length === 1 ? "reel" : "reels"}
+            </p>
+            <div class="mt-4 grid max-w-xs grid-cols-7 gap-1 text-center text-sm">
+              {CALENDAR_WEEKDAYS.map((weekday) => (
+                <span
+                  class="pb-1 text-xs font-bold text-slate-500"
+                  aria-hidden="true"
+                >
+                  {weekday}
+                </span>
+              ))}
+              {Array.from({ length: month.leadingBlanks }, () => (
+                <span aria-hidden="true" />
+              ))}
+              {month.days.map(({ dayOfMonth, entry, inChallenge }) =>
+                entry ? (
+                  <a
+                    href={`/daily/${entry.id}`}
+                    title={`Day ${entry.day}: ${entry.title}`}
+                    aria-label={`Day ${entry.day}, ${entry.dateLabel}: ${entry.title}`}
+                    class={`flex aspect-square items-center justify-center rounded-full font-bold text-primary-950 transition hover:bg-primary-300 ${
+                      entry === latest
+                        ? "bg-primary-300 ring-2 ring-primary-700"
+                        : "bg-primary-200"
+                    }`}
+                  >
+                    {dayOfMonth}
+                  </a>
+                ) : (
+                  <span
+                    class={`flex aspect-square items-center justify-center rounded ${
+                      inChallenge ? "text-slate-500" : "text-slate-300"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {dayOfMonth}
+                  </span>
+                ),
+              )}
+            </div>
+          </div>
+
+          {month.entries.length === 0 ? (
+            <p class="italic text-slate-500">No reels this month.</p>
+          ) : (
+            <ol class="ml-7 flex flex-col gap-10 border-l-2 border-slate-300 pl-10 sm:pl-12 md:ml-0">
+              {month.entries.map((entry) => (
+                <li class="relative">
+                  {/* The dot sits centered on the line to the left of the text. */}
+                  <a
+                    href={`/daily/${entry.id}`}
+                    class={`absolute -top-1 left-[-65px] flex h-12 w-12 flex-col items-center justify-center rounded-full text-primary-950 ring-4 ring-[#fefdf6] transition hover:bg-primary-300 sm:left-[-73px] ${
+                      entry === latest
+                        ? "bg-primary-300 outline-2 outline-offset-4 outline-primary-700"
+                        : "bg-primary-200"
+                    }`}
+                    aria-hidden="true"
+                    tabindex="-1"
+                  >
+                    <span class="text-[0.55rem] font-extrabold uppercase tracking-widest">
+                      Day
+                    </span>
+                    <span class="font-display text-xl leading-none">
+                      {entry.day}
+                    </span>
+                  </a>
+                  <p class="text-xs font-extrabold uppercase tracking-wide text-primary-700">
+                    {entry.dateLabel}
+                  </p>
+                  <h3 class="mt-1 text-lg font-extrabold leading-snug text-slate-950">
+                    <a
+                      href={`/daily/${entry.id}`}
+                      class="transition hover:text-primary-700"
+                    >
+                      {entry.title}
+                    </a>
+                  </h3>
+                  {entry.solution && (
+                    <a
+                      href={`/solutions#${entry.solution.key}`}
+                      class="mt-2 inline-block text-sm font-bold text-slate-700 underline-offset-4 decoration-2 transition hover:text-slate-950 hover:underline"
+                    >
+                      {entry.solution.name} →
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      ))
+    )
+  }
+
+  <section
+    class="border-t border-slate-200 pt-8"
+    aria-labelledby="daily-newsletter-heading"
+  >
+    <NewsletterSignupCard
+      id="daily-newsletter"
+      title="Get the week's solutions in your inbox"
+    />
+  </section>
+</Layout>

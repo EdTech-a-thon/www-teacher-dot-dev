@@ -143,6 +143,10 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
               class="modal-description mt-4 text-sm leading-relaxed text-slate-700"
             />
             <div data-solution-actions class="mt-6 flex flex-wrap gap-3" />
+            <div
+              data-solution-reels
+              class="mt-6 hidden border-t border-slate-200 pt-4"
+            />
           </div>
         </div>
       </div>
@@ -159,6 +163,7 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
   const meta = document.querySelector("[data-solution-meta]");
   const description = document.querySelector("[data-solution-description]");
   const actions = document.querySelector("[data-solution-actions]");
+  const reels = document.querySelector("[data-solution-reels]");
   const closeButton = document.querySelector("[data-solution-close]");
   const items = dataEl ? JSON.parse(dataEl.textContent || "[]") : [];
   const byKey = new Map(items.map((item) => [item.key, item]));
@@ -168,6 +173,9 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
     modal.classList.add("hidden");
     modal.classList.remove("flex");
     document.body.style.overflow = "";
+    if (location.hash) {
+      history.replaceState(null, "", location.pathname + location.search);
+    }
   }
 
   function openSolution(key) {
@@ -198,10 +206,29 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
         ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500">Visit solution <span aria-hidden="true">&rarr;</span></a>`
         : "";
     }
+    if (reels instanceof HTMLElement) {
+      const list = item.reels || [];
+      reels.innerHTML = list.length
+        ? `<h3 class="text-xs font-extrabold uppercase tracking-wide text-primary-700">Watch the reels</h3><ul class="mt-2 flex flex-wrap gap-2">${list
+            .map(
+              (reel) =>
+                `<li><a href="${reel.href}" class="inline-block rounded-full bg-primary-100 px-3 py-1 text-sm font-bold text-primary-900 transition hover:bg-primary-200">${reel.label}</a></li>`,
+            )
+            .join("")}</ul>`
+        : "";
+      reels.classList.toggle("hidden", list.length === 0);
+    }
 
     modal.classList.remove("hidden");
     modal.classList.add("flex");
     document.body.style.overflow = "hidden";
+    // Keep the address shareable: /solutions#<solution> opens this popup.
+    history.replaceState(null, "", `#${encodeURIComponent(key)}`);
+  }
+
+  function openFromHash() {
+    const key = decodeURIComponent(location.hash.slice(1));
+    if (byKey.has(key)) openSolution(key);
   }
 
   document.addEventListener("click", (event) => {
@@ -221,6 +248,8 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeSolution();
   });
+  window.addEventListener("hashchange", openFromHash);
+  openFromHash();
 </script>
 
 <style>

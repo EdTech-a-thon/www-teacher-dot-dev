@@ -1,0 +1,54 @@
+---
+// An Instagram Reel, embedded with Instagram's own embed.js, which swaps the
+// blockquote for the playable Reel once it loads. The link inside is what
+// visitors see until then, or if Instagram's script is blocked.
+interface Props {
+  url: string;
+  day: number;
+  class?: string;
+}
+
+const { url, day, class: className = "" } = Astro.props;
+---
+
+<div class={`instagram-reel relative mx-auto w-full ${className}`}>
+  <blockquote
+    class="instagram-media"
+    data-instgrm-permalink={url}
+    data-instgrm-version="14"
+  >
+    <a href={url} target="_blank" rel="noopener noreferrer">
+      Watch Day {day} on Instagram →
+    </a>
+  </blockquote>
+</div>
+
+<script is:inline async src="https://www.instagram.com/embed.js"></script>
+
+<style>
+  /* embed.js positions the iframe absolutely while the Reel loads, so the
+     wrapper is relative to keep it inside this box. */
+  .instagram-reel :global(.instagram-media) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Before embed.js runs (or if it's blocked), show the link in a box about
+     the size of the Reel. */
+  .instagram-reel :global(blockquote.instagram-media) {
+    display: flex;
+    aspect-ratio: 352 / 646;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border: 1px solid var(--color-slate-400);
+    border-bottom-width: 4px;
+    border-radius: 0.5rem;
+    background: white;
+    text-align: center;
+    font-weight: 700;
+    color: var(--color-primary-700);
+  }
+</style>

@@ -1,12 +1,22 @@
 ---
 import { Image } from "astro:assets";
+import DailyCalendar from "../components/DailyCalendar.astro";
+import InstagramReel from "../components/InstagramReel.astro";
 import Layout from "../components/Layout.astro";
 import NewsletterSignupCard from "../components/NewsletterSignupCard.astro";
 import SolutionCarousel from "../components/SolutionCarousel.astro";
 import edtechathon2026Group from "../assets/edtechathon-2026-group.jpeg";
 import { getSolutionGallery } from "../lib/board";
+import { getDailyEntries } from "../lib/daily";
 
 const solutionItems = (await getSolutionGallery()).slice(0, 8);
+const dailyEntries = await getDailyEntries();
+const latestDaily = dailyEntries[0];
+// Finishes "We built …": "A math facts drill website" becomes "a math facts
+// drill website", while a name like "Test Parrot" keeps its capitals.
+const builtThing = latestDaily?.title.replace(/^(A|An|The)\b/, (article) =>
+  article.toLowerCase(),
+);
 const organizers = [
   {
     id: "josh-pullen",
@@ -69,43 +79,51 @@ const organizers = [
 ---
 
 <Layout>
-  <section class="flex flex-col items-center gap-10 py-8 text-center">
-    <div class="mx-auto flex max-w-3xl flex-col items-center gap-5">
-      <h1 class="text-xl uppercase text-slate-600">
-        one simple principle
-      </h1>
-      <p class="font-display text-4xl text-slate-900 sm:text-5xl">
-        Teachers Deserve Better.
-      </p>
-      <p class="max-w-2xl text-lg leading-8 text-slate-700">
-        We make tools with teachers that solve real classroom problems.
-      </p>
-    </div>
-    <div
-      class="polaroid-stack"
-      aria-label="Teachers and developers collaborating"
+  <section class="-my-4 flex flex-col gap-10 md:-my-8">
+    <h1
+      class="mx-auto max-w-3xl text-balance text-center font-sora text-3xl font-medium leading-snug tracking-tight text-slate-900 sm:text-4xl"
     >
-      <figure class="polaroid polaroid-back" aria-hidden="true">
-        <img src="/hero-3.jpg" alt="" />
-      </figure>
-      <figure class="polaroid polaroid-middle" aria-hidden="true">
-        <img src="/hero-2.jpg" alt="" />
-      </figure>
-      <figure class="polaroid polaroid-front">
-        <Image
-          src={edtechathon2026Group}
-          alt="Teachers and developers gathered together with virtual attendees joining onscreen"
-          width={576}
-          widths={[320, 576]}
-          sizes="(min-width: 1024px) 336px, 288px"
-          loading="eager"
-          fetchpriority="high"
-        />
-        <figcaption class="polaroid-caption font-handwritten">
-          EdTech-a-thon 2026
-        </figcaption>
-      </figure>
-    </div>
+      We make tools for teachers that solve real classroom problems.
+    </h1>
+
+    {
+      latestDaily && (
+        <div class="grid gap-8 md:grid-cols-[1fr_24rem] md:grid-rows-[auto_1fr] md:gap-x-12">
+          <div class="flex flex-col gap-4">
+            <h2
+              data-daily-sentence
+              data-date={latestDaily.date}
+              class="text-balance text-2xl leading-snug text-slate-800 sm:text-3xl"
+            >
+              <span data-daily-when>{latestDaily.monthDayLabel}</span>
+              <span data-daily-verb>was</span>
+              <mark class="box-decoration-clone rounded-md bg-primary-200 px-2 text-primary-950">Day {latestDaily.day}</mark>
+              of solving a teacher's problem every single day.
+            </h2>
+            <p class="text-xl leading-snug text-slate-800">
+              We built{" "}
+              <a
+                href={`/daily/${latestDaily.id}`}
+                class="font-extrabold text-slate-950 underline-offset-4 decoration-2 transition hover:text-primary-700 hover:underline"
+              >{builtThing}</a>{/[.!?]$/.test(latestDaily.title) ? "" : "."}
+            </p>
+          </div>
+
+          <InstagramReel
+            url={latestDaily.instagramUrl}
+            day={latestDaily.day}
+            class="max-w-[24rem] md:col-start-2 md:row-span-2 md:row-start-1"
+          />
+
+          <div class="md:col-start-1 md:row-start-2">
+            <h3 class="mb-2 text-sm font-extrabold uppercase tracking-wide text-primary-700">
+              Past problems solved
+            </h3>
+            <DailyCalendar entries={dailyEntries} />
+          </div>
+        </div>
+      )
+    }
   </section>
 
   <div>
@@ -118,6 +136,58 @@ const organizers = [
       />
     </section>
   </div>
+
+  <section
+    aria-labelledby="community-heading"
+    class="grid items-center gap-12 md:grid-cols-[1fr_auto]"
+  >
+    <div class="flex flex-col gap-4">
+      <p class="text-sm font-extrabold uppercase tracking-wide text-primary-700">
+        Our community
+      </p>
+      <h2 id="community-heading" class="font-display text-4xl text-slate-950">
+        Teachers and developers, building together
+      </h2>
+      <p class="text-lg leading-8 text-slate-700">
+        Teachers and developers live in different worlds. At EdTech-a-thon
+        2026, we brought them together from July 20–22, virtually and in person
+        in Atlanta, GA, for three days of collaboration, community, and problem
+        solving. The first solutions in our gallery were built there.
+      </p>
+      <a
+        href="/events/edtech-a-thon-2026"
+        class="w-fit py-1 text-sm font-bold text-slate-700 underline-offset-4 decoration-2 transition hover:text-slate-950 hover:underline"
+      >
+        About EdTech-a-thon 2026 →
+      </a>
+    </div>
+    <div class="w-full pb-4 md:w-72 md:pr-4">
+      <div
+        class="polaroid-stack"
+        aria-label="Teachers and developers collaborating"
+      >
+        <figure class="polaroid polaroid-back" aria-hidden="true">
+          <img src="/hero-3.jpg" alt="" loading="lazy" />
+        </figure>
+        <figure class="polaroid polaroid-middle" aria-hidden="true">
+          <img src="/hero-2.jpg" alt="" loading="lazy" />
+        </figure>
+        <figure class="polaroid polaroid-front">
+          <Image
+            src={edtechathon2026Group}
+            alt="Teachers and developers gathered together with virtual attendees joining onscreen"
+            width={576}
+            widths={[320, 576]}
+            sizes="288px"
+            loading="lazy"
+          />
+          <figcaption class="polaroid-caption font-handwritten">
+            EdTech-a-thon 2026
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
 
   <section aria-labelledby="organizers-heading">
     <h2 id="organizers-heading" class="font-display text-4xl text-slate-950">
@@ -169,3 +239,25 @@ const organizers = [
     </div>
   </section>
 </Layout>
+
+<script>
+  // The page is built ahead of time, so "Today" and "Yesterday" are worked out
+  // in the visitor's browser. Without this the sentence just names the date.
+  const sentence = document.querySelector<HTMLElement>("[data-daily-sentence]");
+  const when = sentence?.querySelector("[data-daily-when]");
+  const verb = sentence?.querySelector("[data-daily-verb]");
+  if (sentence && when && verb) {
+    const localIso = (date: Date) =>
+      [date.getFullYear(), date.getMonth() + 1, date.getDate()]
+        .map((n) => String(n).padStart(2, "0"))
+        .join("-");
+    const now = new Date();
+    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    if (sentence.dataset.date === localIso(now)) {
+      when.textContent = `Today, ${when.textContent},`;
+      verb.textContent = "is";
+    } else if (sentence.dataset.date === localIso(yesterday)) {
+      when.textContent = `Yesterday, ${when.textContent},`;
+    }
+  }
+</script>

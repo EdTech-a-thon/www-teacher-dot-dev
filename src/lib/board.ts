@@ -1,5 +1,6 @@
 import { getCollection } from "astro:content";
 import type { ImageMetadata } from "astro";
+import { getDailyEntries } from "./daily";
 
 export function normalizeUrl(url: string | null | undefined): string {
   const u = url?.trim() ?? "";
@@ -44,6 +45,7 @@ export interface GalleryItem {
   screenshot?: ImageMetadata;
   builtBy: string;
   date: string;
+  reels: { day: number; href: string; label: string }[];
 }
 
 const GALLERY_MONTHS = [
@@ -68,7 +70,22 @@ export function formatGalleryDate(iso: string): string {
 }
 
 export async function getSolutionGallery(): Promise<GalleryItem[]> {
-  const rows = await getCollection("solutions");
+  const [rows, dailyEntries] = await Promise.all([
+    getCollection("solutions"),
+    getDailyEntries(),
+  ]);
+  const reelsBySolution = new Map<string, GalleryItem["reels"]>();
+  for (const entry of [...dailyEntries].reverse()) {
+    if (!entry.solution) continue;
+    const reels = reelsBySolution.get(entry.solution.key) ?? [];
+    reels.push({
+      day: entry.day,
+      href: `/daily/${entry.id}`,
+      label: `Day ${entry.day} · ${entry.shortDateLabel}`,
+    });
+    reelsBySolution.set(entry.solution.key, reels);
+  }
+
   return rows
     .map((row) => ({
       key: row.id,
@@ -81,6 +98,7 @@ export async function getSolutionGallery(): Promise<GalleryItem[]> {
       screenshot: row.data.screenshot,
       builtBy: row.data.builtBy,
       date: formatGalleryDate(row.data.completedAt),
+      reels: reelsBySolution.get(row.id) ?? [],
       sortKey: row.data.completedAt,
     }))
     .sort((a, b) => b.sortKey.localeCompare(a.sortKey))

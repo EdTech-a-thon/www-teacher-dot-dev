@@ -10,7 +10,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "images": "node scripts/resize-newsletter-images.mjs"
+    "images": "node scripts/resize-newsletter-images.mjs",
+    "daily": "node scripts/new-daily.mjs"
   },
   "devDependencies": {
     "astro": "^6.1.9"
