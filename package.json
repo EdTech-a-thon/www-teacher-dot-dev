@@ -11,7 +11,9 @@
     "build": "astro build",
     "preview": "astro preview",
     "images": "node scripts/resize-newsletter-images.mjs",
-    "daily": "node scripts/new-daily.mjs"
+    "daily": "node scripts/new-daily.mjs",
+    "publish-daily": "node scripts/publish-daily.mjs",
+    "test": "node --test scripts/*.test.mjs"
   },
   "devDependencies": {
     "astro": "^6.1.9"
