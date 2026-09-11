@@ -78,9 +78,9 @@ Missing metadata is prompted for. Saved progress is reused for the same video.
   --solution ID|none      Solution to link on the website
   --date YYYY-MM-DD       Local date (defaults to today on a new run)
   --note TEXT             Optional website paragraph
-  --caption TEXT         Caption shared by Instagram and YouTube
+  --caption TEXT         Instagram caption (also used as YouTube's description)
   --caption-file FILE    Read the caption from a UTF-8 text file instead
-  --youtube-title TEXT   YouTube title (defaults to the website title)
+  --youtube-title TEXT   YouTube title (prompted for; --yes defaults to website title)
   --made-for-kids BOOL   true or false; whether the video targets children
   --dry-run              Local preview only: no API calls, uploads or writes
   --yes, -y              Skip confirmation and optional prompts; required fields still need flags
@@ -134,8 +134,8 @@ Setup and examples: scripts/PUBLISHING.md`);
     const date = values.date ?? saved?.date ?? today;
     const note = values.note ?? saved?.note ?? (values.yes ? "" : await ask("Website note (optional, Enter to skip): "));
     let caption = values["caption-file"] !== undefined ? (await readFile(path.resolve(values["caption-file"]), "utf8")).trim() : values.caption ?? saved?.caption;
-    if (caption === undefined) caption = values.yes ? title : (await ask("Social caption (Enter to use title): ")) || title;
-    const youtubeTitle = values["youtube-title"] ?? saved?.youtubeTitle ?? title;
+    if (caption === undefined) caption = values.yes ? title : (await ask("Instagram caption (Enter to use website title): ")) || title;
+    const youtubeTitle = values["youtube-title"] ?? saved?.youtubeTitle ?? (values.yes ? title : (await ask("YouTube title (Enter to use website title): ")) || title);
     const kids = await required(values["made-for-kids"] ?? (saved ? String(saved.madeForKids) : undefined), "Is this video directed at children? (true/false; teacher-facing content is false): ");
     if (!["true", "false"].includes(kids)) throw new Error("Answer true or false for made-for-kids.");
     const metadata = { title, solution, date, note, caption, youtubeTitle, madeForKids: kids === "true" };
@@ -164,7 +164,7 @@ Setup and examples: scripts/PUBLISHING.md`);
       const account = accounts[platform];
       console.log(`${platform}: ${account.name}${account.name === account.id ? "" : ` (${account.id})`}`);
     }
-    console.log(`Website: ${title}\nDate: ${date}\nSolution: ${solution}\nNote: ${note || "(none)"}\nYouTube title: ${youtubeTitle}\nYouTube: PUBLIC, made for kids: ${metadata.madeForKids}\n\nCaption:\n${caption}`);
+    console.log(`Website: ${title}\nDate: ${date}\nSolution: ${solution}\nNote: ${note || "(none)"}\nYouTube title: ${youtubeTitle}\nYouTube: PUBLIC, made for kids: ${metadata.madeForKids}\n\nInstagram caption / YouTube description:\n${caption}`);
     console.log(`\nWebsite publishing: ${values.deploy ? "build, commit daily entry and push main" : "create local entry only (add --deploy to push)"}`);
     if (previous) console.log(`Resuming saved progress${previous.postId ? `: ${previous.postId}` : ""}.`);
     if (values["dry-run"]) { console.log("\nDry run complete. No API calls, files written, uploads or posts."); return; }

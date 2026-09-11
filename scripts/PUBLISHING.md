@@ -42,7 +42,8 @@ The command asks for:
 - A website title completing **“We built …”**.
 - A solution ID, or `none`.
 - An optional website note.
-- The social caption (Enter uses the title).
+- An Instagram caption (Enter uses the website title).
+- A separate YouTube title (Enter uses the website title).
 - Whether the video is **directed at children**, for YouTube's made-for-kids flag.
   A video aimed at teachers is not automatically child-directed because it is
   about education; choose the flag for the video's actual audience.
@@ -51,8 +52,10 @@ Then it previews the accounts, video, caption, public visibility, and website
 changes, and asks you to type `yes`. Nothing is uploaded before confirmation.
 The date defaults to today in your computer's local timezone.
 
-YouTube's title defaults to the website title; use `--youtube-title` to override
-it. Instagram's caption and YouTube's description use the same caption text.
+Instagram's caption and YouTube's title are asked separately. You can skip those
+questions with `--caption` (or `--caption-file`) and `--youtube-title`. The Instagram
+caption is also used as YouTube's description. With `--yes`, both default to the
+website title if their flags are omitted.
 
 ### Fully unattended
 
