@@ -45,6 +45,7 @@ The command asks for:
 - An Instagram caption (Enter uses the website title).
 - A separate YouTube title (Enter uses the website title).
 - Whether the video is **directed at children**, for YouTube's made-for-kids flag.
+- An optional **thumbnail image** for the Instagram Reel cover (Enter skips it).
   A video aimed at teachers is not automatically child-directed because it is
   about education; choose the flag for the video's actual audience.
 
@@ -68,6 +69,7 @@ npm run publish-daily -- /path/to/day-11.mp4 \
   --caption-file /path/to/caption.txt \
   --youtube-title "Day 11: A math facts drill website" \
   --made-for-kids false \
+  --thumbnail /path/to/cover.jpg \
   --yes --deploy
 ```
 
@@ -110,11 +112,35 @@ cannot be added later.
 The website continues to use its existing Instagram embed. It does not host a
 second copy of the video or add a YouTube player.
 
+## Thumbnails
+
+`--thumbnail /path/to/cover.jpg` sets the **Instagram Reel cover**. Pass
+`--thumbnail none` (or press Enter at the prompt) to let Instagram use the first
+frame of the video instead.
+
+**YouTube Shorts cannot take a custom thumbnail through the API.** Zernio's
+documentation states plainly that “custom thumbnails are not supported for Shorts
+through the API”, so this command does not send one to YouTube, and the same image
+cannot serve both platforms. YouTube picks a frame automatically; to override it,
+open the Short in YouTube Studio or the YouTube app and edit it there. A video
+over 3 minutes or in landscape would be a regular video rather than a Short and
+could take a cover, but such a video is outside what this command accepts.
+
+The image must be **JPG or PNG**, nonempty, and at most **8 MB**. The command
+checks the real image data, not just the filename, so a renamed or mislabelled
+file is rejected before anything is uploaded. Instagram recommends **1080 × 1920**
+(9:16); other sizes are accepted and cropped by Instagram.
+
+The cover is uploaded before the video, so a failure here costs nothing. Once the
+post has been submitted, the cover is frozen: rerunning with a different
+`--thumbnail` is refused rather than silently ignored or republished. Change a
+published Reel's cover in the Instagram app.
+
 ## Safe retries and recovery
 
 Progress is stored in `.daily-publish/<video-sha256>.json`, including the original
-metadata, account IDs, media URL, Zernio post ID, platform statuses and website
-filename. API keys and account tokens are not stored there. The video hash makes
+metadata, account IDs, media and cover URLs, Zernio post ID, platform statuses and
+website filename. API keys and account tokens are not stored there. The video hash makes
 the same video recognizable even if you rename it or run again tomorrow.
 
 **Keep this directory and back it up privately.** Deleting it, changing machines

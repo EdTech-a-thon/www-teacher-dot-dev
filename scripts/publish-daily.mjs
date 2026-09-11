@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import {
   checkDeployment, createClient, deployEntry, ensureDailyEntry, hashFile, inspectVideo,
-  platforms, publishDaily, saveState, selectAccounts, validateMetadata,
+  platforms, prepareThumbnail, publishDaily, saveState, selectAccounts, validateMetadata,
 } from "./lib/daily-publisher.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -62,6 +62,7 @@ async function main() {
       title: { type: "string" }, solution: { type: "string" }, date: { type: "string" },
       note: { type: "string" }, caption: { type: "string" }, "caption-file": { type: "string" },
       "youtube-title": { type: "string" }, "made-for-kids": { type: "string" },
+      thumbnail: { type: "string" },
       "dry-run": { type: "boolean" }, yes: { type: "boolean", short: "y" },
       deploy: { type: "boolean" }, accounts: { type: "boolean" },
       "retry-failed": { type: "boolean" }, "resume-post": { type: "string" },
@@ -82,6 +83,7 @@ Missing metadata is prompted for. Saved progress is reused for the same video.
   --caption-file FILE    Read the caption from a UTF-8 text file instead
   --youtube-title TEXT   YouTube title (prompted for; --yes defaults to website title)
   --made-for-kids BOOL   true or false; whether the video targets children
+  --thumbnail FILE|none  Optional JPG/PNG Instagram cover (YouTube Shorts API cannot set one)
   --dry-run              Local preview only: no API calls, uploads or writes
   --yes, -y              Skip confirmation and optional prompts; required fields still need flags
   --deploy               Build, commit ONLY the daily entry, push main to trigger site deploy
@@ -144,6 +146,9 @@ Setup and examples: scripts/PUBLISHING.md`);
     if (metadataChanged && (previous.submitStarted || previous.postId)) {
       throw new Error("This video already has submitted metadata. Rerun without changing those flags; edit published captions in Zernio and website entries separately.");
     }
+    const thumbnailInput = values.thumbnail ?? (previous || values.yes ? undefined
+      : await ask("Thumbnail image for Instagram (JPG/PNG path, Enter to skip; not supported for YouTube Shorts): "));
+    const { thumbnail, thumbnailChanged } = await prepareThumbnail(previous, thumbnailInput);
     if (values["resume-post"] && !previous) throw new Error("--resume-post requires saved progress for this video.");
     if (values["retry-failed"] && !previous?.postId) throw new Error("--retry-failed requires a saved Zernio post ID.");
     const configured = {
@@ -160,6 +165,12 @@ Setup and examples: scripts/PUBLISHING.md`);
     }])) : selectAccounts((await client.request("/accounts")).accounts, configured));
 
     console.log(`\nVideo: ${file}\n${video.width} × ${video.height}, ${video.duration.toFixed(1)} seconds, ${(info.size / 1_000_000).toFixed(1)} MB`);
+    if (thumbnail) {
+      console.log(`Instagram cover: ${thumbnail.file} (${thumbnail.width} × ${thumbnail.height}, ${(thumbnail.size / 1_000_000).toFixed(1)} MB)`);
+      console.log("YouTube: no custom thumbnail. YouTube's API cannot set one on a Short; choose it in YouTube Studio or the app.");
+    } else {
+      console.log("Instagram cover: first video frame (pass --thumbnail to use an image)");
+    }
     for (const platform of platforms) {
       const account = accounts[platform];
       console.log(`${platform}: ${account.name}${account.name === account.id ? "" : ` (${account.id})`}`);
@@ -172,8 +183,11 @@ Setup and examples: scripts/PUBLISHING.md`);
       console.log("Cancelled. Nothing uploaded or published."); return;
     }
     rl?.close();
-    const state = previous ? { ...previous, metadata, requestId: metadataChanged ? randomUUID() : previous.requestId }
-      : { version: 1, videoHash, metadata, accounts, requestId: randomUUID() };
+    const changed = metadataChanged || thumbnailChanged;
+    const state = previous ? { ...previous, metadata, thumbnail, requestId: changed ? randomUUID() : previous.requestId }
+      : { version: 1, videoHash, metadata, thumbnail, accounts, requestId: randomUUID() };
+    // A different cover must not reuse the previous upload's URL.
+    if (thumbnailChanged) delete state.thumbnailUrl;
     const save = () => saveState(stateFile, state);
     await save();
     console.log(`Progress: ${path.relative(root, stateFile)} (keep this file for safe retries)`);

@@ -7,8 +7,9 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import test from "node:test";
 import {
-  acceptPost, checkDeployment, createClient, deployEntry, ensureDailyEntry,
-  postBody, publishDaily, saveState, selectAccounts, validateMetadata, validateVideo,
+  acceptPost, checkDeployment, createClient, deployEntry, ensureDailyEntry, postBody,
+  prepareThumbnail, publishDaily, saveState, selectAccounts, validateMetadata,
+  validateThumbnail, validateVideo,
 } from "./lib/daily-publisher.mjs";
 
 const exec = promisify(execFile);
@@ -20,6 +21,8 @@ const metadata = {
 const instagramUrl = "https://www.instagram.com/reel/TEST123/";
 const youtubeUrl = "https://www.youtube.com/watch?v=TEST123";
 const mediaUrl = "https://media.example.test/day-11.mp4";
+const thumbnailUrl = "https://media.example.test/cover.jpg";
+const cover = { file: "/fake/cover.jpg", size: 1000, hash: "cover-hash", width: 1080, height: 1920 };
 const siteFile = "src/content/daily/2026-09-11.md";
 function freshState() {
   return {
@@ -41,7 +44,7 @@ function harness(state = freshState(), responses = [post()]) {
   const snapshots = [];
   const entries = [];
   const client = {
-    async upload() { calls.push("upload"); return mediaUrl; },
+    async upload(file) { calls.push(`upload:${path.basename(file)}`); return file.endsWith(".mp4") ? mediaUrl : thumbnailUrl; },
     async request(endpoint, options) {
       calls.push({ endpoint, options });
       const response = responses.shift();
@@ -112,7 +115,7 @@ test("request targets only Instagram Reels and public YouTube with explicit audi
 test("publishes once, saves before submission, and passes the Instagram URL to the website", async () => {
   const h = harness();
   await h.run();
-  assert.equal(h.calls[0], "upload");
+  assert.equal(h.calls[0], "upload:video.mp4");
   assert.equal(h.calls[1].endpoint, "/posts");
   assert.equal(h.calls[1].options.requestId, "request-id");
   assert.equal(h.snapshots[1].submitStarted, true);
@@ -191,7 +194,7 @@ test("validation rejection can be retried without uploading the same media again
   assert.equal(h.state.mediaUrl, mediaUrl);
   const resumed = harness(h.state);
   await resumed.run();
-  assert.equal(resumed.calls.some((call) => call === "upload"), false);
+  assert.equal(resumed.calls.some((call) => String(call).startsWith("upload")), false);
 });
 
 test("lost-response recovery verifies the original video before attaching a post", async () => {
@@ -327,4 +330,83 @@ test("help is usable without credentials and describes the publication boundary"
   const { stdout } = await exec(process.execPath, [path.join(root, "scripts/publish-daily.mjs"), "--help"]);
   assert.match(stdout, /--deploy/);
   assert.match(stdout, /--dry-run/);
+  assert.match(stdout, /--thumbnail/);
+});
+
+test("thumbnail validation accepts JPG/PNG and rejects mislabelled or oversized images", () => {
+  const jpeg = { streams: [{ codec_type: "video", codec_name: "mjpeg", width: 1080, height: 1920 }] };
+  const png = { streams: [{ codec_type: "video", codec_name: "png", width: 1080, height: 1920 }] };
+  assert.deepEqual(validateThumbnail(jpeg, 1000, ".jpg"), { width: 1080, height: 1920 });
+  assert.deepEqual(validateThumbnail(png, 1000, ".png"), { width: 1080, height: 1920 });
+  assert.throws(() => validateThumbnail(jpeg, 1000, ".webp"), /JPG or PNG/);
+  assert.throws(() => validateThumbnail(jpeg, 8_000_001, ".jpg"), /8 MB/);
+  assert.throws(() => validateThumbnail(jpeg, 0, ".jpg"), /8 MB/);
+  // A renamed video or mislabelled image must not be sent as a cover.
+  assert.throws(() => validateThumbnail(jpeg, 1000, ".png"), /matching its filename extension/);
+  const video = { streams: [{ codec_type: "video", codec_name: "h264", width: 1080, height: 1920 }] };
+  assert.throws(() => validateThumbnail(video, 1000, ".jpg"), /matching its filename extension/);
+});
+
+test("cover selection reuses, replaces and clears safely, and is frozen after submission", async () => {
+  const inspected = [];
+  const inspect = async (file) => {
+    inspected.push(file);
+    return { ...cover, file, hash: file === cover.file ? cover.hash : `other:${file}` };
+  };
+  assert.deepEqual(await prepareThumbnail(undefined, cover.file, inspect), { thumbnail: cover, thumbnailChanged: true });
+  assert.deepEqual(await prepareThumbnail(undefined, undefined, inspect), { thumbnail: null, thumbnailChanged: false });
+  assert.deepEqual(await prepareThumbnail(undefined, "", inspect), { thumbnail: null, thumbnailChanged: false });
+
+  // An uploaded cover is reused without needing its local file to still exist.
+  inspected.length = 0;
+  assert.deepEqual(await prepareThumbnail({ thumbnail: cover, thumbnailUrl }, undefined, inspect),
+    { thumbnail: cover, thumbnailChanged: false });
+  assert.deepEqual(inspected, []);
+
+  assert.deepEqual(await prepareThumbnail({ thumbnail: cover }, "none", inspect), { thumbnail: null, thumbnailChanged: true });
+  await assert.rejects(prepareThumbnail({ thumbnail: cover, postId: "post-id" }, "none", inspect), /already submitted/);
+  await assert.rejects(prepareThumbnail({ thumbnail: cover, submitStarted: true }, "/fake/other.jpg", inspect), /already submitted/);
+  await assert.rejects(prepareThumbnail({ thumbnail: cover }, undefined, async () => ({ ...cover, hash: "edited" })), /thumbnail file changed/);
+});
+
+test("cover uploads before the video and is sent to Instagram only", async () => {
+  const h = harness({ ...freshState(), thumbnail: cover });
+  await h.run();
+  assert.deepEqual(h.calls.slice(0, 2), ["upload:cover.jpg", "upload:video.mp4"]);
+  assert.equal(h.state.thumbnailUrl, thumbnailUrl);
+  const body = h.calls.find((call) => call.endpoint === "/posts").options.body;
+  assert.equal(body.platforms[0].platformSpecificData.instagramThumbnail, thumbnailUrl);
+  assert.equal("instagramThumbnail" in body.platforms[1].platformSpecificData, false);
+  assert.equal(body.mediaItems[0].url, mediaUrl);
+});
+
+test("no cover leaves the Reel cover to Instagram", async () => {
+  const h = harness();
+  await h.run();
+  const body = h.calls.find((call) => call.endpoint === "/posts").options.body;
+  assert.equal("instagramThumbnail" in body.platforms[0].platformSpecificData, false);
+});
+
+test("an uploaded cover is never uploaded twice", async () => {
+  const h = harness({ ...freshState(), thumbnail: cover, thumbnailUrl, mediaUrl });
+  await h.run();
+  assert.equal(h.calls.some((call) => String(call).startsWith("upload")), false);
+  const body = h.calls.find((call) => call.endpoint === "/posts").options.body;
+  assert.equal(body.platforms[0].platformSpecificData.instagramThumbnail, thumbnailUrl);
+});
+
+test("cover upload presigns and transfers an image content type", async (t) => {
+  const dir = await temporary(t);
+  const file = path.join(dir, "cover.jpg");
+  await writeFile(file, "image-bytes");
+  const calls = [];
+  const client = createClient("secret-key", async (url, options) => {
+    calls.push({ url, options });
+    if (url.endsWith("/media/presign")) return new Response(JSON.stringify({ uploadUrl: "https://storage.example.test/signed", publicUrl: thumbnailUrl }));
+    for await (const chunk of options.body) void chunk;
+    return new Response(null, { status: 200 });
+  });
+  assert.equal(await client.upload(file, 11), thumbnailUrl);
+  assert.equal(JSON.parse(calls[0].options.body).contentType, "image/jpeg");
+  assert.equal(calls[1].options.headers["Content-Type"], "image/jpeg");
 });

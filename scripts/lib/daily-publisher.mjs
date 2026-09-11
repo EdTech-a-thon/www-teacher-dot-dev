@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { readdir, readFile, writeFile, rename } from "node:fs/promises";
+import { readdir, readFile, writeFile, rename, stat } from "node:fs/promises";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -57,6 +57,47 @@ export async function inspectVideo(file, size) {
   return validateVideo(JSON.parse(stdout), size, path.extname(file).toLowerCase());
 }
 
+export function validateThumbnail(info, size, extension) {
+  const codec = { ".jpg": "mjpeg", ".jpeg": "mjpeg", ".png": "png" }[extension];
+  if (!codec) throw new Error("Use a JPG or PNG thumbnail image.");
+  if (!size || size > 8_000_000) throw new Error("The thumbnail must be nonempty and at most 8 MB.");
+  const stream = info.streams?.find((item) => item.codec_type === "video");
+  if (stream?.codec_name !== codec || !(stream.width > 0 && stream.height > 0)) {
+    throw new Error("The thumbnail must be a valid JPG or PNG image matching its filename extension.");
+  }
+  return { width: stream.width, height: stream.height };
+}
+
+export async function inspectThumbnail(file) {
+  const info = await stat(file);
+  if (!info.isFile()) throw new Error("The thumbnail path must be a file.");
+  if (!info.size || info.size > 8_000_000) throw new Error("The thumbnail must be nonempty and at most 8 MB.");
+  let stdout;
+  try {
+    ({ stdout } = await exec("ffprobe", ["-v", "error", "-show_streams", "-of", "json", file], { timeout: 30_000 }));
+  } catch (error) {
+    if (error.code === "ENOENT") throw new Error("Install FFmpeg (including ffprobe) to validate the thumbnail.");
+    throw new Error("ffprobe could not read the thumbnail. Use a valid JPG or PNG image.");
+  }
+  const dimensions = validateThumbnail(JSON.parse(stdout), info.size, path.extname(file).toLowerCase());
+  return { file, size: info.size, hash: await hashFile(file), ...dimensions };
+}
+
+export async function prepareThumbnail(previous, input, inspect = inspectThumbnail) {
+  const thumbnail = input === undefined ? previous?.thumbnail ?? null
+    : !input.trim() || input.trim().toLowerCase() === "none" ? null : await inspect(path.resolve(input));
+  const thumbnailChanged = (thumbnail?.hash ?? null) !== (previous?.thumbnail?.hash ?? null);
+  if (thumbnailChanged && (previous?.submitStarted || previous?.postId)) {
+    throw new Error("This video was already submitted. Its thumbnail cannot be added, changed or removed by resubmitting; edit the cover in Instagram instead.");
+  }
+  // An already uploaded cover can be reused even if its local file was moved or deleted.
+  if (thumbnail && input === undefined && !previous?.thumbnailUrl && !previous?.submitStarted && !previous?.postId) {
+    const current = await inspect(thumbnail.file);
+    if (current.hash !== thumbnail.hash) throw new Error("The saved thumbnail file changed. Pass --thumbnail explicitly to select the new image before publishing.");
+  }
+  return { thumbnail, thumbnailChanged };
+}
+
 export async function hashFile(file) {
   const hash = createHash("sha256");
   for await (const chunk of createReadStream(file)) hash.update(chunk);
@@ -86,7 +127,10 @@ export function postBody(state) {
     platforms: platforms.map((platform) => ({
       platform,
       accountId: state.accounts[platform].id,
-      platformSpecificData: platform === "instagram" ? { shareToFeed: true } : {
+      platformSpecificData: platform === "instagram" ? {
+        shareToFeed: true,
+        ...(state.thumbnailUrl ? { instagramThumbnail: state.thumbnailUrl } : {}),
+      } : {
         title: state.metadata.youtubeTitle,
         visibility: "public",
         madeForKids: state.metadata.madeForKids,
@@ -123,7 +167,11 @@ export function createClient(apiKey, fetchImpl = fetch) {
       return data;
     },
     async upload(file, size) {
-      const contentType = path.extname(file).toLowerCase() === ".mov" ? "video/quicktime" : "video/mp4";
+      const contentType = {
+        ".mov": "video/quicktime", ".mp4": "video/mp4",
+        ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+      }[path.extname(file).toLowerCase()];
+      if (!contentType) throw new Error("Unsupported media file extension.");
       const { uploadUrl, publicUrl } = await this.request("/media/presign", {
         method: "POST", body: { filename: path.basename(file), contentType, size },
       });
@@ -137,7 +185,7 @@ export function createClient(apiKey, fetchImpl = fetch) {
           method: "PUT", headers: { "Content-Type": contentType, "Content-Length": String(size) },
           body: stream, duplex: "half", signal: AbortSignal.timeout(15 * 60_000), redirect: "error",
         });
-        if (!response.ok) throw new Error(`Video upload failed (HTTP ${response.status}).`);
+        if (!response.ok) throw new Error(`Media upload failed (HTTP ${response.status}).`);
       } finally {
         stream.destroy();
       }
@@ -178,6 +226,11 @@ export async function publishDaily({ state, save, client, file, size, ensureEntr
   if (!state.postId) {
     if (state.submitStarted) {
       throw new Error("The last publish has an unknown outcome. Check Zernio for the post, then rerun with --resume-post <post-id>. Refusing to submit again and risk duplicates.");
+    }
+    if (state.thumbnail && !state.thumbnailUrl) {
+      log("Uploading Instagram cover image to Zernio…");
+      state.thumbnailUrl = await client.upload(state.thumbnail.file, state.thumbnail.size);
+      await save();
     }
     if (!state.mediaUrl) {
       log("Uploading video to Zernio…");
