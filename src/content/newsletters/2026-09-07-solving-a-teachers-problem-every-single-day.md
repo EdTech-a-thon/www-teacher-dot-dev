@@ -1,7 +1,7 @@
 ---
 title: "We're solving a teacher's problem every single day (we need more!)"
 subject: "We're solving a teacher's problem every single day (we need more!)"
-date: "2026-09-06"
+date: "2026-09-07"
 preview: "teacher.dev sets a goal to solve a teacher problem every day, TestParrot gets its first development update, and Josh enters a back-to-school cooking contest."
 thumbnail: "./images/TestParrot-question-bank.png"
 thumbnailAlt: "TestParrot question bank with questions tagged by topic and difficulty"
