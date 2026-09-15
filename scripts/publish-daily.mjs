@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Publish a local video to Instagram and YouTube, then run new-daily.mjs.
+// Publish a local video to Instagram, YouTube and TikTok, then run new-daily.mjs.
 // See scripts/PUBLISHING.md for setup, unattended runs and recovery.
 import { randomUUID } from "node:crypto";
 import { unlinkSync } from "node:fs";
@@ -72,22 +72,22 @@ async function main() {
   if (values.help) {
     console.log(`Usage: npm run publish-daily -- <video.mp4> [options]
 
-Publishes to Instagram Reels and YouTube, then creates the website entry.
+Publishes to Instagram Reels, YouTube and TikTok, then creates the website entry.
 Missing metadata is prompted for. Saved progress is reused for the same video.
 
   --title TEXT            Website title, completing "We built …"
   --solution ID|none      Solution to link on the website
   --date YYYY-MM-DD       Local date (defaults to today on a new run)
   --note TEXT             Optional website paragraph
-  --caption TEXT         Instagram caption (also used as YouTube's description)
+  --caption TEXT         Instagram and TikTok caption (also used as YouTube's description)
   --caption-file FILE    Read the caption from a UTF-8 text file instead
   --youtube-title TEXT   YouTube title (prompted for; --yes defaults to website title)
   --made-for-kids BOOL   true or false; whether the video targets children
-  --thumbnail FILE|none  Optional JPG/PNG Instagram cover (YouTube Shorts API cannot set one)
+  --thumbnail FILE|none  Optional JPG/PNG Instagram and TikTok cover (YouTube Shorts API cannot set one)
   --dry-run              Local preview only: no API calls, uploads or writes
   --yes, -y              Skip confirmation and optional prompts; required fields still need flags
   --deploy               Build, commit ONLY the daily entry, push main to trigger site deploy
-  --accounts             List connected Instagram/YouTube accounts; no publishing
+  --accounts             List connected Instagram/YouTube/TikTok accounts; no publishing
   --retry-failed         Retry failed targets on the existing post; skip published targets
   --resume-post ID       Recover a lost publish response using its Zernio post ID
 
@@ -136,7 +136,7 @@ Setup and examples: scripts/PUBLISHING.md`);
     const date = values.date ?? saved?.date ?? today;
     const note = values.note ?? saved?.note ?? (values.yes ? "" : await ask("Website note (optional, Enter to skip): "));
     let caption = values["caption-file"] !== undefined ? (await readFile(path.resolve(values["caption-file"]), "utf8")).trim() : values.caption ?? saved?.caption;
-    if (caption === undefined) caption = values.yes ? title : (await ask("Instagram caption (Enter to use website title): ")) || title;
+    if (caption === undefined) caption = values.yes ? title : (await ask("Instagram/TikTok caption (Enter to use website title): ")) || title;
     const youtubeTitle = values["youtube-title"] ?? saved?.youtubeTitle ?? (values.yes ? title : (await ask("YouTube title (Enter to use website title): ")) || title);
     const kids = await required(values["made-for-kids"] ?? (saved ? String(saved.madeForKids) : undefined), "Is this video directed at children? (true/false; teacher-facing content is false): ");
     if (!["true", "false"].includes(kids)) throw new Error("Answer true or false for made-for-kids.");
@@ -147,35 +147,41 @@ Setup and examples: scripts/PUBLISHING.md`);
       throw new Error("This video already has submitted metadata. Rerun without changing those flags; edit published captions in Zernio and website entries separately.");
     }
     const thumbnailInput = values.thumbnail ?? (previous || values.yes ? undefined
-      : await ask("Thumbnail image for Instagram (JPG/PNG path, Enter to skip; not supported for YouTube Shorts): "));
+      : await ask("Cover image for Instagram and TikTok (JPG/PNG path, Enter to skip; not supported for YouTube Shorts): "));
     const { thumbnail, thumbnailChanged } = await prepareThumbnail(previous, thumbnailInput);
     if (values["resume-post"] && !previous) throw new Error("--resume-post requires saved progress for this video.");
     if (values["retry-failed"] && !previous?.postId) throw new Error("--retry-failed requires a saved Zernio post ID.");
     const configured = {
       instagram: process.env.ZERNIO_INSTAGRAM_ACCOUNT_ID,
       youtube: process.env.ZERNIO_YOUTUBE_ACCOUNT_ID,
+      tiktok: process.env.ZERNIO_TIKTOK_ACCOUNT_ID,
     };
-    if (previous && platforms.some((platform) => configured[platform] && configured[platform] !== previous.accounts[platform].id)) {
+    if (previous && platforms.some((platform) => configured[platform] && previous.accounts[platform] && configured[platform] !== previous.accounts[platform].id)) {
       throw new Error("Configured accounts changed since this video was submitted. Restore the original account IDs before resuming.");
     }
     if (values.deploy) await checkDeployment(root, previous?.siteFile);
     const client = values["dry-run"] ? undefined : createClient(process.env.ZERNIO_API_KEY);
-    const accounts = previous?.accounts ?? (values["dry-run"] ? Object.fromEntries(platforms.map((platform) => [platform, {
-      id: configured[platform] || "(auto-detect on publish)", name: configured[platform] || "(auto-detect on publish)",
-    }])) : selectAccounts((await client.request("/accounts")).accounts, configured));
+    // Progress saved before TikTok support keeps its original targets once submitted; before that, TikTok is added.
+    const accounts = previous?.submitStarted || previous?.postId ? previous.accounts : {
+      ...(values["dry-run"] ? Object.fromEntries(platforms.map((platform) => [platform, {
+        id: configured[platform] || "(auto-detect on publish)", name: configured[platform] || "(auto-detect on publish)",
+      }])) : selectAccounts((await client.request("/accounts")).accounts, configured)),
+      ...previous?.accounts,
+    };
 
     console.log(`\nVideo: ${file}\n${video.width} × ${video.height}, ${video.duration.toFixed(1)} seconds, ${(info.size / 1_000_000).toFixed(1)} MB`);
     if (thumbnail) {
-      console.log(`Instagram cover: ${thumbnail.file} (${thumbnail.width} × ${thumbnail.height}, ${(thumbnail.size / 1_000_000).toFixed(1)} MB)`);
+      console.log(`Instagram/TikTok cover: ${thumbnail.file} (${thumbnail.width} × ${thumbnail.height}, ${(thumbnail.size / 1_000_000).toFixed(1)} MB)`);
       console.log("YouTube: no custom thumbnail. YouTube's API cannot set one on a Short; choose it in YouTube Studio or the app.");
     } else {
-      console.log("Instagram cover: first video frame (pass --thumbnail to use an image)");
+      console.log("Instagram/TikTok cover: first video frame (pass --thumbnail to use an image)");
     }
-    for (const platform of platforms) {
+    for (const platform of platforms.filter((platform) => accounts[platform])) {
       const account = accounts[platform];
+
       console.log(`${platform}: ${account.name}${account.name === account.id ? "" : ` (${account.id})`}`);
     }
-    console.log(`Website: ${title}\nDate: ${date}\nSolution: ${solution}\nNote: ${note || "(none)"}\nYouTube title: ${youtubeTitle}\nYouTube: PUBLIC, made for kids: ${metadata.madeForKids}\n\nInstagram caption / YouTube description:\n${caption}`);
+    console.log(`Website: ${title}\nDate: ${date}\nSolution: ${solution}\nNote: ${note || "(none)"}\nYouTube title: ${youtubeTitle}\nYouTube: PUBLIC, made for kids: ${metadata.madeForKids}\nTikTok: PUBLIC; comments, duet and stitch allowed wherever the account permits them\n\nInstagram/TikTok caption / YouTube description:\n${caption}`);
     console.log(`\nWebsite publishing: ${values.deploy ? "build, commit daily entry and push main" : "create local entry only (add --deploy to push)"}`);
     if (previous) console.log(`Resuming saved progress${previous.postId ? `: ${previous.postId}` : ""}.`);
     if (values["dry-run"]) { console.log("\nDry run complete. No API calls, files written, uploads or posts."); return; }
@@ -199,7 +205,8 @@ Setup and examples: scripts/PUBLISHING.md`);
       });
     } catch (error) { publishError = error; }
     for (const target of state.post?.platforms ?? []) {
-      console.log(`${target.platform}: ${target.status}${target.platformPostUrl ? ` — ${target.platformPostUrl}` : ""}`);
+      const pendingUrl = target.platform === "tiktok" && target.status === "published" && !target.platformPostUrl;
+      console.log(`${target.platform}: ${target.status}${target.platformPostUrl ? ` — ${target.platformPostUrl}` : pendingUrl ? " (TikTok provides the link a few minutes later; see Zernio or the TikTok app)" : ""}`);
     }
     if (state.siteFile) {
       console.log(`Website: ${state.siteFile}`);
@@ -209,7 +216,8 @@ Setup and examples: scripts/PUBLISHING.md`);
       } else console.log("The website entry is local; commit and push it, or rerun with --deploy.");
     }
     if (publishError) throw publishError;
-    console.log("\nInstagram and YouTube report published; the website entry is ready.");
+    console.log("\nInstagram, YouTube and TikTok report published; the website entry is ready.");
+
   } finally { release(); }
 }
 

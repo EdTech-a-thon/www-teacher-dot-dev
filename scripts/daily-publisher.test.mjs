@@ -8,7 +8,7 @@ import { promisify } from "node:util";
 import test from "node:test";
 import {
   acceptPost, checkDeployment, createClient, deployEntry, ensureDailyEntry, postBody,
-  prepareThumbnail, publishDaily, saveState, selectAccounts, validateMetadata,
+  prepareThumbnail, publishDaily, saveState, selectAccounts, tiktokSettings, validateMetadata,
   validateThumbnail, validateVideo,
 } from "./lib/daily-publisher.mjs";
 
@@ -20,6 +20,15 @@ const metadata = {
 };
 const instagramUrl = "https://www.instagram.com/reel/TEST123/";
 const youtubeUrl = "https://www.youtube.com/watch?v=TEST123";
+const tiktokUrl = "https://www.tiktok.com/@teacher/video/123";
+const creatorInfo = {
+  creator: { nickname: "teacher", canPostMore: true },
+  privacyLevels: [{ value: "PUBLIC_TO_EVERYONE" }, { value: "SELF_ONLY" }],
+  postingLimits: { interactionSettings: {
+    allow_comment: { enabled: true, required: true }, allow_duet: { enabled: true, required: true }, allow_stitch: { enabled: false, required: true },
+  } },
+};
+const tiktok = { allow_comment: true, allow_duet: true, allow_stitch: false };
 const mediaUrl = "https://media.example.test/day-11.mp4";
 const thumbnailUrl = "https://media.example.test/cover.jpg";
 const cover = { file: "/fake/cover.jpg", size: 1000, hash: "cover-hash", width: 1080, height: 1920 };
@@ -27,15 +36,16 @@ const siteFile = "src/content/daily/2026-09-11.md";
 function freshState() {
   return {
     version: 1, videoHash: "video-hash", metadata: { ...metadata }, requestId: "request-id",
-    accounts: { instagram: { id: "ig", name: "teacher" }, youtube: { id: "yt", name: "Teacher" } },
+    accounts: { instagram: { id: "ig", name: "teacher" }, youtube: { id: "yt", name: "Teacher" }, tiktok: { id: "tt", name: "teacher" } },
   };
 }
-function post(ig = "published", yt = "published", status = "published") {
+function post(ig = "published", yt = "published", status = "published", tt = "published") {
   return {
     _id: "post-id", status, metadata: { dailyVideoHash: "video-hash" }, mediaItems: [{ url: mediaUrl }],
     platforms: [
       { platform: "instagram", accountId: "ig", status: ig, ...(ig === "published" ? { platformPostUrl: instagramUrl } : {}) },
       { platform: "youtube", accountId: "yt", status: yt, ...(yt === "published" ? { platformPostUrl: youtubeUrl } : { errorMessage: "YouTube error" }) },
+      { platform: "tiktok", accountId: "tt", status: tt, ...(tt === "published" ? { platformPostUrl: tiktokUrl } : { errorMessage: "TikTok error" }) },
     ],
   };
 }
@@ -47,6 +57,7 @@ function harness(state = freshState(), responses = [post()]) {
     async upload(file) { calls.push(`upload:${path.basename(file)}`); return file.endsWith(".mp4") ? mediaUrl : thumbnailUrl; },
     async request(endpoint, options) {
       calls.push({ endpoint, options });
+      if (endpoint.endsWith("/tiktok/creator-info?mediaType=video")) return structuredClone(creatorInfo);
       const response = responses.shift();
       if (response instanceof Error) throw response;
       if (!response) throw new Error(`Unexpected API request: ${endpoint}`);
@@ -93,37 +104,73 @@ test("video validation handles phone rotation and rejects non-Shorts media", () 
 });
 
 test("account selection refuses ambiguous, inactive or wrong-platform IDs", () => {
-  const accounts = [{ _id: "ig", platform: "instagram", isActive: true }, { _id: "yt", platform: "youtube", isActive: true }];
+  const accounts = [{ _id: "ig", platform: "instagram", isActive: true }, { _id: "yt", platform: "youtube", isActive: true }, { _id: "tt", platform: "tiktok", isActive: true }];
   assert.equal(selectAccounts(accounts).youtube.id, "yt");
   assert.throws(() => selectAccounts([...accounts, { ...accounts[0], _id: "ig2" }]), /found 2/);
   assert.equal(selectAccounts([...accounts, { ...accounts[0], _id: "ig2" }], { instagram: "ig2" }).instagram.id, "ig2");
   assert.throws(() => selectAccounts(accounts, { instagram: "yt" }), /found 0/);
-  assert.throws(() => selectAccounts([{ ...accounts[0], isActive: false }, accounts[1]]), /found 0/);
+  assert.throws(() => selectAccounts([{ ...accounts[0], isActive: false }, accounts[1], accounts[2]]), /found 0/);
+  assert.throws(() => selectAccounts(accounts.slice(0, 2)), /one active tiktok account; found 0/);
 });
 
-test("request targets only Instagram Reels and public YouTube with explicit audience", () => {
-  const state = { ...freshState(), mediaUrl };
+test("request targets Instagram Reels, public YouTube with explicit audience, and public TikTok with consent flags", () => {
+  const state = { ...freshState(), mediaUrl, tiktok };
   const body = postBody(state);
   assert.equal(body.publishNow, true);
-  assert.deepEqual(body.platforms.map((target) => target.platform), ["instagram", "youtube"]);
+  assert.deepEqual(body.platforms.map((target) => target.platform), ["instagram", "youtube", "tiktok"]);
   assert.deepEqual(body.platforms[0].platformSpecificData, { shareToFeed: true });
   assert.deepEqual(body.platforms[1].platformSpecificData, { title: "Day 11", visibility: "public", madeForKids: false });
+  assert.deepEqual(body.platforms[2].platformSpecificData, { tiktokSettings: {
+    privacy_level: "PUBLIC_TO_EVERYONE", allow_comment: true, allow_duet: true, allow_stitch: false,
+    content_preview_confirmed: true, express_consent_given: true,
+  } });
   assert.equal(body.mediaItems[0].url, mediaUrl);
   assert.equal(body.metadata.dailyVideoHash, state.videoHash);
+});
+
+test("TikTok settings follow the creator's allowed interactions and require public posting", () => {
+  assert.deepEqual(tiktokSettings(creatorInfo), tiktok);
+  assert.throws(() => tiktokSettings({ ...creatorInfo, privacyLevels: [{ value: "SELF_ONLY" }] }), /public posts/);
+  assert.throws(() => tiktokSettings({ ...creatorInfo, creator: { canPostMore: false } }), /cannot post more/);
+});
+
+test("progress saved before TikTok support keeps targeting only Instagram and YouTube", () => {
+  const state = { ...freshState(), mediaUrl };
+  delete state.accounts.tiktok;
+  assert.deepEqual(postBody(state).platforms.map((target) => target.platform), ["instagram", "youtube"]);
+  const twoPlatform = post();
+  twoPlatform.platforms.pop();
+  acceptPost(state, twoPlatform);
+  assert.equal(state.post.platforms.length, 2);
 });
 
 test("publishes once, saves before submission, and passes the Instagram URL to the website", async () => {
   const h = harness();
   await h.run();
-  assert.equal(h.calls[0], "upload:video.mp4");
-  assert.equal(h.calls[1].endpoint, "/posts");
-  assert.equal(h.calls[1].options.requestId, "request-id");
-  assert.equal(h.snapshots[1].submitStarted, true);
-  assert.equal(h.snapshots[1].postId, undefined);
+  assert.equal(h.calls[0].endpoint, "/accounts/tt/tiktok/creator-info?mediaType=video");
+  assert.deepEqual(h.snapshots[0].tiktok, tiktok);
+  assert.equal(h.calls[1], "upload:video.mp4");
+  assert.equal(h.calls[2].endpoint, "/posts");
+  assert.equal(h.calls[2].options.requestId, "request-id");
+  assert.deepEqual(h.calls[2].options.body.platforms[2].platformSpecificData.tiktokSettings.allow_stitch, false);
+  assert.equal(h.snapshots[2].submitStarted, true);
+  assert.equal(h.snapshots[2].postId, undefined);
   assert.deepEqual(h.entries, [[instagramUrl, metadata]]);
   assert.equal(h.state.siteFile, siteFile);
   assert.equal(h.state.postId, "post-id");
 });
+
+test("TikTok published without its permalink yet completes the run; a TikTok failure is reported", async () => {
+  const pending = post();
+  delete pending.platforms[2].platformPostUrl;
+  const h = harness(freshState(), [pending]);
+  await h.run();
+  assert.equal(h.state.siteFile, siteFile);
+  const failed = harness(freshState(), [post("published", "published", "partial", "failed")]);
+  await assert.rejects(failed.run(), /tiktok: TikTok error/);
+  assert.equal(failed.state.siteFile, siteFile);
+});
+
 
 test("rerunning published video only reads its existing post and checks its website entry", async () => {
   const state = { ...freshState(), mediaUrl, submitStarted: true, postId: "post-id", siteFile };
@@ -211,7 +258,7 @@ test("lost-response recovery verifies the original video before attaching a post
 });
 
 test("existingPost idempotency response is accepted", async () => {
-  const h = harness();
+  const h = harness({ ...freshState(), tiktok });
   h.client.request = async () => ({ existingPost: post() });
   await h.run();
   assert.equal(h.state.postId, "post-id");
@@ -369,14 +416,16 @@ test("cover selection reuses, replaces and clears safely, and is frozen after su
   await assert.rejects(prepareThumbnail({ thumbnail: cover }, undefined, async () => ({ ...cover, hash: "edited" })), /thumbnail file changed/);
 });
 
-test("cover uploads before the video and is sent to Instagram only", async () => {
+test("cover uploads before the video and is sent to Instagram and TikTok, not YouTube", async () => {
   const h = harness({ ...freshState(), thumbnail: cover });
   await h.run();
-  assert.deepEqual(h.calls.slice(0, 2), ["upload:cover.jpg", "upload:video.mp4"]);
+  assert.deepEqual(h.calls.filter((call) => typeof call === "string"), ["upload:cover.jpg", "upload:video.mp4"]);
   assert.equal(h.state.thumbnailUrl, thumbnailUrl);
   const body = h.calls.find((call) => call.endpoint === "/posts").options.body;
   assert.equal(body.platforms[0].platformSpecificData.instagramThumbnail, thumbnailUrl);
   assert.equal("instagramThumbnail" in body.platforms[1].platformSpecificData, false);
+  assert.equal(body.platforms[2].platformSpecificData.tiktokSettings.video_cover_image_url, thumbnailUrl);
+
   assert.equal(body.mediaItems[0].url, mediaUrl);
 });
 

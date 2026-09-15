@@ -1,14 +1,15 @@
 # Daily video publishing
 
-One command publishes your original video to **Instagram Reels and YouTube**, then
-passes the published Instagram link to `scripts/new-daily.mjs`. Add `--deploy` to
-build the website, commit just that day's entry, and push `main`, triggering the
-site's existing automatic deployment. TikTok is not included.
+One command publishes your original video to **Instagram Reels, YouTube and
+TikTok**, then passes the published Instagram link to `scripts/new-daily.mjs`. Add
+`--deploy` to build the website, commit just that day's entry, and push `main`,
+triggering the site's existing automatic deployment.
 
 ## One-time setup
 
 1. In [Zernio](https://zernio.com), connect your Instagram **Business or Creator**
-   account and your YouTube channel. Create an API key with access to both.
+   account, your YouTube channel and your TikTok account. Create an API key with
+   access to all three.
 2. Copy `.env.publish.example` to `.env.publish` and fill in `ZERNIO_API_KEY`.
    This file is gitignored; do not put your key in a command, commit, or chat.
 3. Run:
@@ -18,7 +19,7 @@ site's existing automatic deployment. TikTok is not included.
    ```
 
    If there is exactly one active account per platform, it is selected
-   automatically. Otherwise, set the two account IDs in `.env.publish`.
+   automatically. Otherwise, set the account IDs in `.env.publish`.
 4. Install Node **22.12+** and **FFmpeg** (the command uses `ffprobe`).
 5. To use `--deploy`, first commit/merge the publisher implementation onto `main`,
    tracking `origin/main`. Your working tree must be clean except for the daily
@@ -42,10 +43,10 @@ The command asks for:
 - A website title completing **“We built …”**.
 - A solution ID, or `none`.
 - An optional website note.
-- An Instagram caption (Enter uses the website title).
+- An Instagram/TikTok caption (Enter uses the website title).
 - A separate YouTube title (Enter uses the website title).
 - Whether the video is **directed at children**, for YouTube's made-for-kids flag.
-- An optional **thumbnail image** for the Instagram Reel cover (Enter skips it).
+- An optional **thumbnail image** for the Instagram Reel and TikTok cover (Enter skips it).
   A video aimed at teachers is not automatically child-directed because it is
   about education; choose the flag for the video's actual audience.
 
@@ -55,8 +56,23 @@ The date defaults to today in your computer's local timezone.
 
 Instagram's caption and YouTube's title are asked separately. You can skip those
 questions with `--caption` (or `--caption-file`) and `--youtube-title`. The Instagram
-caption is also used as YouTube's description. With `--yes`, both default to the
-website title if their flags are omitted.
+caption is also TikTok's caption and YouTube's description. With `--yes`, both
+default to the website title if their flags are omitted.
+
+### TikTok
+
+TikTok posts are **public**. TikTok's API requires explicit values for the
+comment, duet and stitch toggles, so just before publishing the command reads
+Zernio's creator-info endpoint and allows each interaction your TikTok account
+permits (turn one off in the TikTok app to disable it). The two consent flags
+TikTok requires (`content_preview_confirmed` and `express_consent_given`) are
+sent as `true`: this command's preview and `yes` confirmation are your review of
+the post. TikTok's own duration, size and caption limits are looser than the
+checks below, so nothing extra is validated.
+
+TikTok reports the post as `published` a little before it exposes the video's
+public link, so the command does not wait for the TikTok URL. When it is still
+missing at the end of a run, find the video in Zernio or the TikTok app.
 
 ### Fully unattended
 
@@ -99,12 +115,13 @@ orientation, and **3–90 seconds**, matching the shared limits in Zernio's curr
 Instagram documentation. Recommended export: **1080 × 1920, H.264 video, AAC audio**.
 Phone rotation metadata is taken into account. There is no transcoding or
 platform music selection: captions, voiceover, music and subtitles should
-already be baked into the original video, with appropriate rights for both
+already be baked into the original video, with appropriate rights for all three
 platforms.
 
 A single video is automatically a Reel on Instagram (also shared to the main
 feed). YouTube determines Shorts classification from the video's shape and
-length; there is no “Shorts” API flag. This tool uploads publicly. Normal platform
+length; there is no “Shorts” API flag. TikTok posts the same file as a video
+post. This tool uploads publicly. Normal platform
 processing, moderation and copyright checks still apply; Zernio reporting
 `published` does not guarantee playback is immediately ready or restrictions
 cannot be added later.
@@ -114,14 +131,15 @@ second copy of the video or add a YouTube player.
 
 ## Thumbnails
 
-`--thumbnail /path/to/cover.jpg` sets the **Instagram Reel cover**. Pass
-`--thumbnail none` (or press Enter at the prompt) to let Instagram use the first
-frame of the video instead.
+`--thumbnail /path/to/cover.jpg` sets the **Instagram Reel cover and the TikTok
+cover** (the same uploaded image is passed to both). Pass `--thumbnail none` (or
+press Enter at the prompt) to let Instagram and TikTok use a frame of the video
+instead.
 
 **YouTube Shorts cannot take a custom thumbnail through the API.** Zernio's
 documentation states plainly that “custom thumbnails are not supported for Shorts
-through the API”, so this command does not send one to YouTube, and the same image
-cannot serve both platforms. YouTube picks a frame automatically; to override it,
+through the API”, so this command does not send one to YouTube; the same image
+cannot serve all three. YouTube picks a frame automatically; to override it,
 open the Short in YouTube Studio or the YouTube app and edit it there. A video
 over 3 minutes or in landscape would be a regular video rather than a Short and
 could take a cover, but such a video is outside what this command accepts.
@@ -134,7 +152,7 @@ file is rejected before anything is uploaded. Instagram recommends **1080 × 192
 The cover is uploaded before the video, so a failure here costs nothing. Once the
 post has been submitted, the cover is frozen: rerunning with a different
 `--thumbnail` is refused rather than silently ignored or republished. Change a
-published Reel's cover in the Instagram app.
+published cover in the Instagram or TikTok app.
 
 ## Safe retries and recovery
 
@@ -153,10 +171,14 @@ is gitignored and created with owner-only permissions where supported.
   It checks the existing post instead of creating another one. The command polls
   every 10 seconds for up to 20 minutes after submission (individual API calls
   have their own timeouts).
-- **Instagram succeeds but YouTube fails:** the website entry is still created;
-  `--deploy` still publishes that entry. The command exits unsuccessfully and
-  reports the YouTube error. Fix the problem (for example, reconnect the account)
-  and rerun with `--retry-failed`. Zernio's retry endpoint skips published targets.
+- **Instagram succeeds but YouTube or TikTok fails:** the website entry is still
+  created; `--deploy` still publishes that entry. The command exits unsuccessfully
+  and reports the failing platform's error. Fix the problem (for example, reconnect
+  the account) and rerun with `--retry-failed`. Zernio's retry endpoint skips
+  published targets.
+- **Progress saved before TikTok support:** a video whose progress file has no
+  TikTok account keeps its original Instagram + YouTube targets when rerun. Publish
+  it to TikTok by hand if wanted; do not delete the progress file.
 - **Website build, commit or push fails:** social progress is kept. Fix the local
   problem and rerun with `--deploy`. An already committed daily entry can be pushed
   on the next run without creating another commit. The script refuses to push
@@ -198,4 +220,6 @@ that deployment or claim that the live site has finished updating.
 - [Idempotency](https://docs.zernio.com/guides/idempotency)
 - [Instagram](https://docs.zernio.com/platforms/instagram)
 - [YouTube](https://docs.zernio.com/platforms/youtube)
+- [TikTok](https://docs.zernio.com/platforms/tiktok)
+
 - [Retry failed post](https://docs.zernio.com/posts/retry-post)

@@ -7,7 +7,7 @@ import { promisify } from "node:util";
 import { setTimeout } from "node:timers/promises";
 
 const exec = promisify(execFile);
-export const platforms = ["instagram", "youtube"];
+export const platforms = ["instagram", "youtube", "tiktok"];
 
 export function validateMetadata(metadata, solutions) {
   if (!metadata.title?.trim()) throw new Error("A website title is required.");
@@ -88,7 +88,7 @@ export async function prepareThumbnail(previous, input, inspect = inspectThumbna
     : !input.trim() || input.trim().toLowerCase() === "none" ? null : await inspect(path.resolve(input));
   const thumbnailChanged = (thumbnail?.hash ?? null) !== (previous?.thumbnail?.hash ?? null);
   if (thumbnailChanged && (previous?.submitStarted || previous?.postId)) {
-    throw new Error("This video was already submitted. Its thumbnail cannot be added, changed or removed by resubmitting; edit the cover in Instagram instead.");
+    throw new Error("This video was already submitted. Its thumbnail cannot be added, changed or removed by resubmitting; edit the cover in Instagram and TikTok instead.");
   }
   // An already uploaded cover can be reused even if its local file was moved or deleted.
   if (thumbnail && input === undefined && !previous?.thumbnailUrl && !previous?.submitStarted && !previous?.postId) {
@@ -120,20 +120,44 @@ export function selectAccounts(accounts, configured = {}) {
   }));
 }
 
+// TikTok forbids defaulting its interaction toggles and only accepts privacy levels the creator allows,
+// so the settings come from Zernio's creator-info endpoint. Every interaction the creator permits is enabled.
+export function tiktokSettings(info) {
+  if (!info?.privacyLevels?.some((level) => level.value === "PUBLIC_TO_EVERYONE")) {
+    throw new Error("TikTok does not allow public posts from this account right now. Check the account's privacy settings in the TikTok app.");
+  }
+  if (info.creator?.canPostMore === false) throw new Error("TikTok reports this account cannot post more right now (daily API posting limit). Try again later.");
+  const toggles = info.postingLimits?.interactionSettings ?? {};
+  return Object.fromEntries(["allow_comment", "allow_duet", "allow_stitch"].map((name) => [name, toggles[name]?.enabled !== false]));
+}
+
+// Progress saved before TikTok support has only Instagram and YouTube accounts; it keeps those targets.
+export function targetPlatforms(state) {
+  return platforms.filter((platform) => state.accounts[platform]);
+}
+
 export function postBody(state) {
   return {
     content: state.metadata.caption,
     mediaItems: [{ type: "video", url: state.mediaUrl }],
-    platforms: platforms.map((platform) => ({
+    platforms: targetPlatforms(state).map((platform) => ({
       platform,
       accountId: state.accounts[platform].id,
       platformSpecificData: platform === "instagram" ? {
         shareToFeed: true,
         ...(state.thumbnailUrl ? { instagramThumbnail: state.thumbnailUrl } : {}),
-      } : {
+      } : platform === "youtube" ? {
         title: state.metadata.youtubeTitle,
         visibility: "public",
         madeForKids: state.metadata.madeForKids,
+      } : {
+        tiktokSettings: {
+          privacy_level: "PUBLIC_TO_EVERYONE",
+          ...state.tiktok,
+          ...(state.thumbnailUrl ? { video_cover_image_url: state.thumbnailUrl } : {}),
+          content_preview_confirmed: true,
+          express_consent_given: true,
+        },
       },
     })),
     publishNow: true,
@@ -196,7 +220,7 @@ export function createClient(apiKey, fetchImpl = fetch) {
 
 export function acceptPost(state, post) {
   if (!post?._id || !Array.isArray(post.platforms)) throw new Error("Zernio did not return a post ID and platform results.");
-  for (const platform of platforms) {
+  for (const platform of targetPlatforms(state)) {
     const target = post.platforms.find((item) => item.platform === platform);
     const accountId = typeof target?.accountId === "object" ? target.accountId?._id : target?.accountId;
     if (!target || (accountId && accountId !== state.accounts[platform].id)) {
@@ -227,8 +251,13 @@ export async function publishDaily({ state, save, client, file, size, ensureEntr
     if (state.submitStarted) {
       throw new Error("The last publish has an unknown outcome. Check Zernio for the post, then rerun with --resume-post <post-id>. Refusing to submit again and risk duplicates.");
     }
+    if (state.accounts.tiktok && !state.tiktok) {
+      log("Checking TikTok posting settings…");
+      state.tiktok = tiktokSettings(await client.request(`/accounts/${encodeURIComponent(state.accounts.tiktok.id)}/tiktok/creator-info?mediaType=video`));
+      await save();
+    }
     if (state.thumbnail && !state.thumbnailUrl) {
-      log("Uploading Instagram cover image to Zernio…");
+      log("Uploading Instagram/TikTok cover image to Zernio…");
       state.thumbnailUrl = await client.upload(state.thumbnail.file, state.thumbnail.size);
       await save();
     }
@@ -239,7 +268,7 @@ export async function publishDaily({ state, save, client, file, size, ensureEntr
     }
     state.submitStarted = true;
     await save(); // Save before sending: a lost HTTP response must not cause a duplicate.
-    log("Publishing Instagram Reel and YouTube video…");
+    log(`Publishing to ${targetPlatforms(state).join(", ")}…`);
     let data;
     try {
       data = await client.request("/posts", { method: "POST", body: postBody(state), requestId: state.requestId });
@@ -275,7 +304,8 @@ export async function publishDaily({ state, save, client, file, size, ensureEntr
 
   let entryChecked = false;
   for (let attempt = 0; attempt <= maxPolls; attempt++) {
-    const targets = platforms.map((platform) => state.post.platforms.find((item) => item.platform === platform));
+    const targets = targetPlatforms(state).map((platform) => state.post.platforms.find((item) => item.platform === platform));
+
     const instagram = targets[0];
     if (instagram.status === "published" && instagram.platformPostUrl && !entryChecked) {
       state.siteFile = await ensureEntry(instagram.platformPostUrl, state.metadata);
@@ -283,7 +313,9 @@ export async function publishDaily({ state, save, client, file, size, ensureEntr
       await save();
       log(`Website entry: ${state.siteFile}`);
     }
-    if (targets.every((item) => item.status === "published" && item.platformPostUrl) && state.siteFile) return;
+    // TikTok resolves its public URL minutes after publishing; only Instagram's is needed (for the website entry).
+    if (targets.every((item) => item.status === "published" && (item.platformPostUrl || item.platform === "tiktok")) && state.siteFile) return;
+
     const settled = targets.every((item) => ["published", "failed", "cancelled"].includes(item.status));
     if (settled && targets.some((item) => ["failed", "cancelled"].includes(item.status))) {
       const errors = targets.filter((item) => item.status !== "published").map((item) => `${item.platform}: ${item.errorMessage || item.status}`).join("\n");
