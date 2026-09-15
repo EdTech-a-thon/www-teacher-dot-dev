@@ -12,6 +12,20 @@ const solutions = defineCollection({
       completedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       solutionUrl: z.string().default(""),
       showcaseVideo: z.string().default(""),
+      // CRM-owned public URLs, never comments, DMs, captions or internal notes.
+      crmSocialPosts: z.array(z.discriminatedUnion("platform", [
+        z.object({
+          platform: z.literal("instagram"),
+          url: z.string().regex(/^https:\/\/www\.instagram\.com\/p\/[A-Za-z0-9_-]+\/$/),
+          // Shared by the same video cross-posted to several platforms.
+          group: z.string().regex(/^[a-f0-9]{8}$/).default(""),
+        }),
+        z.object({
+          platform: z.literal("tiktok"),
+          url: z.string().regex(/^https:\/\/www\.tiktok\.com\/@[A-Za-z0-9._-]+\/(video|photo)\/\d+$/),
+          group: z.string().regex(/^[a-f0-9]{8}$/).default(""),
+        }),
+      ])).default([]),
       screenshot: image().optional(),
       problems: z.array(z.string()).default([]),
     }),
