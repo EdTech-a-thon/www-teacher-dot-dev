@@ -1,6 +1,7 @@
 ---
 import type { GalleryItem } from "../lib/board";
 import { Image } from "astro:assets";
+import SocialPosts from "./SocialPosts.astro";
 
 interface Props {
   items: GalleryItem[];
@@ -28,8 +29,8 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
   ) : (
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((item) => (
-        <button
-          type="button"
+        <a
+          href={`/solutions/${item.key}/`}
           data-solution-open={item.key}
           class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-1 hover:border-primary-300 hover:shadow-xl"
         >
@@ -84,7 +85,7 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
               </p>
             )}
           </div>
-        </button>
+        </a>
       ))}
     </div>
   )
@@ -93,6 +94,11 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
 {
   items.length > 0 && (
     <>
+      {items.map((item) => (
+        <template data-solution-social={item.key}>
+          <SocialPosts posts={item.socialPosts} solutionName={item.name} />
+        </template>
+      ))}
       <script
         id="solution-gallery-data"
         type="application/json"
@@ -142,6 +148,7 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
               data-solution-description
               class="modal-description mt-4 text-sm leading-relaxed text-slate-700"
             />
+            <div data-solution-social-container />
             <div data-solution-actions class="mt-6 flex flex-wrap gap-3" />
             <div
               data-solution-reels
@@ -164,6 +171,7 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
   const description = document.querySelector("[data-solution-description]");
   const actions = document.querySelector("[data-solution-actions]");
   const reels = document.querySelector("[data-solution-reels]");
+  const social = document.querySelector("[data-solution-social-container]");
   const closeButton = document.querySelector("[data-solution-close]");
   const items = dataEl ? JSON.parse(dataEl.textContent || "[]") : [];
   const byKey = new Map(items.map((item) => [item.key, item]));
@@ -173,6 +181,9 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
     modal.classList.add("hidden");
     modal.classList.remove("flex");
     document.body.style.overflow = "";
+    // Unmount iframe media so closing the modal stops playback.
+    social?.replaceChildren();
+    media?.replaceChildren();
     if (location.hash) {
       history.replaceState(null, "", location.pathname + location.search);
     }
@@ -205,6 +216,18 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
       actions.innerHTML = item.link
         ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500">Visit solution <span aria-hidden="true">&rarr;</span></a>`
         : "";
+    }
+    if (actions instanceof HTMLElement) {
+      const detailLink = document.createElement("a");
+      detailLink.href = `/solutions/${encodeURIComponent(item.key)}/`;
+      detailLink.textContent = "Open solution page →";
+      detailLink.className = "inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50";
+      actions.append(detailLink);
+    }
+    if (social instanceof HTMLElement) {
+      const template = [...document.querySelectorAll<HTMLTemplateElement>("template[data-solution-social]")]
+        .find((element) => element.dataset.solutionSocial === key);
+      social.replaceChildren(...(template ? [template.content.cloneNode(true)] : []));
     }
     if (reels instanceof HTMLElement) {
       const list = item.reels || [];

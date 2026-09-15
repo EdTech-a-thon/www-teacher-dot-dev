@@ -1,0 +1,76 @@
+---
+interface Post {
+  platform: "instagram" | "tiktok";
+  url: string;
+  group?: string;
+}
+
+interface Props {
+  posts: Post[];
+  solutionName: string;
+}
+
+const { posts, solutionName } = Astro.props;
+
+// Posts sharing a group are one video published to several platforms, so they
+// render as a single block. Anything ungrouped stands on its own.
+const clusters: Post[][] = [];
+const byGroup = new Map<string, Post[]>();
+for (const post of posts) {
+  const existing = post.group ? byGroup.get(post.group) : undefined;
+  if (existing) {
+    existing.push(post);
+    continue;
+  }
+  const cluster = [post];
+  clusters.push(cluster);
+  if (post.group) byGroup.set(post.group, cluster);
+}
+
+const labels = { instagram: "Instagram", tiktok: "TikTok" } as const;
+---
+
+{posts.length > 0 && (
+  <section class="mt-8 border-t border-slate-200 pt-6" aria-label="Related social posts">
+    <h2 class="text-xl font-bold text-slate-900">See it on social</h2>
+    <div class="mt-4 flex flex-col gap-8">
+      {clusters.map((cluster, index) => {
+        const embeds = cluster.filter((post) => post.platform === "instagram");
+        const links = cluster.filter((post) => post.platform !== "instagram");
+        return (
+          <div class="min-w-0">
+            {embeds.map((post) => (
+              <div class="min-w-0">
+                <iframe
+                  src={`${post.url}embed/`}
+                  title={`${solutionName} on Instagram — post ${index + 1}`}
+                  loading="lazy"
+                  class="w-full max-w-full rounded-xl border border-slate-200 bg-white"
+                  height="560"
+                  allow="encrypted-media; picture-in-picture"
+                  allowfullscreen
+                />
+                <a href={post.url} target="_blank" rel="noopener noreferrer" class="mt-2 inline-block text-sm text-primary-700 underline">View on Instagram ↗</a>
+                <p class="mt-1 text-xs text-slate-500">If the embed is unavailable, open the post on Instagram.</p>
+              </div>
+            ))}
+            {links.length > 0 && (
+              <div class={embeds.length > 0 ? "mt-3 flex flex-wrap gap-3" : "flex flex-wrap gap-3"}>
+                {links.map((post) => (
+                  <a
+                    href={post.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-2 self-start rounded-lg border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                  >
+                    {embeds.length > 0 ? `Also on ${labels[post.platform]}` : `View on ${labels[post.platform]}`} ↗
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  </section>
+)}
