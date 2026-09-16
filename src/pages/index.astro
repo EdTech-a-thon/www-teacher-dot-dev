@@ -107,6 +107,16 @@ const organizers = [
                 class="font-extrabold text-slate-950 underline-offset-4 decoration-2 transition hover:text-primary-700 hover:underline"
               >{builtThing}</a>{/[.!?]$/.test(latestDaily.title) ? "" : "."}
             </p>
+            {latestDaily.tryUrl && (
+              <a
+                href={latestDaily.tryUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="w-fit rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-700"
+              >
+                Try it <span aria-hidden="true">→</span>
+              </a>
+            )}
           </div>
 
           <InstagramReel

@@ -59,6 +59,7 @@ const daily = defineCollection({
         /^https:\/\/(?:www\.)?instagram\.com\/(?:[\w.]+\/)?(?:reels?|p|tv)\/[\w-]+/,
         "Expected an Instagram Reel link",
       ),
+    tryUrl: z.string().url().optional(),
     solution: reference("solutions").optional(),
   }),
 });

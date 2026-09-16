@@ -9,6 +9,7 @@ export interface DailyEntry {
   monthDayLabel: string;
   title: string;
   instagramUrl: string;
+  tryUrl?: string;
   descriptionHtml: string;
   solution?: {
     key: string;
@@ -85,6 +86,7 @@ export async function getDailyEntries(): Promise<DailyEntry[]> {
         monthDayLabel: `${monthName.format(date)} ${ordinal(date.getUTCDate())}`,
         title: row.data.title,
         instagramUrl: instagramPermalink(row.data.instagramUrl),
+        tryUrl: row.data.tryUrl,
         descriptionHtml: row.rendered?.html ?? "",
         solution: solution && {
           key: solution.id,

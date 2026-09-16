@@ -144,14 +144,23 @@ const months = getCalendarMonths(entries);
                       {entry.title}
                     </a>
                   </h3>
-                  {entry.solution && (
+                  {entry.solution ? (
                     <a
                       href={`/solutions#${entry.solution.key}`}
                       class="mt-2 inline-block text-sm font-bold text-slate-700 underline-offset-4 decoration-2 transition hover:text-slate-950 hover:underline"
                     >
                       {entry.solution.name} →
                     </a>
-                  )}
+                  ) : entry.tryUrl ? (
+                    <a
+                      href={entry.tryUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="mt-2 inline-block text-sm font-bold text-slate-700 underline-offset-4 decoration-2 transition hover:text-slate-950 hover:underline"
+                    >
+                      Try it →
+                    </a>
+                  ) : null}
                 </li>
               ))}
             </ol>
