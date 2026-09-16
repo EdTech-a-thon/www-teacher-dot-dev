@@ -2,75 +2,53 @@
 interface Post {
   platform: "instagram" | "tiktok";
   url: string;
-  group?: string;
+}
+
+interface Reel {
+  href: string;
+  label: string;
 }
 
 interface Props {
   posts: Post[];
-  solutionName: string;
+  reels?: Reel[];
 }
 
-const { posts, solutionName } = Astro.props;
-
-// Posts sharing a group are one video published to several platforms, so they
-// render as a single block. Anything ungrouped stands on its own.
-const clusters: Post[][] = [];
-const byGroup = new Map<string, Post[]>();
-for (const post of posts) {
-  const existing = post.group ? byGroup.get(post.group) : undefined;
-  if (existing) {
-    existing.push(post);
-    continue;
-  }
-  const cluster = [post];
-  clusters.push(cluster);
-  if (post.group) byGroup.set(post.group, cluster);
-}
-
+const { posts, reels = [] } = Astro.props;
 const labels = { instagram: "Instagram", tiktok: "TikTok" } as const;
 ---
 
-{posts.length > 0 && (
-  <section class="mt-8 border-t border-slate-200 pt-6" aria-label="Related social posts">
-    <h2 class="text-xl font-bold text-slate-900">See it on social</h2>
-    <div class="mt-4 flex flex-col gap-8">
-      {clusters.map((cluster, index) => {
-        const embeds = cluster.filter((post) => post.platform === "instagram");
-        const links = cluster.filter((post) => post.platform !== "instagram");
-        return (
-          <div class="min-w-0">
-            {embeds.map((post) => (
-              <div class="min-w-0">
-                <iframe
-                  src={`${post.url}embed/`}
-                  title={`${solutionName} on Instagram — post ${index + 1}`}
-                  loading="lazy"
-                  class="w-full max-w-full rounded-xl border border-slate-200 bg-white"
-                  height="560"
-                  allow="encrypted-media; picture-in-picture"
-                  allowfullscreen
-                />
-                <a href={post.url} target="_blank" rel="noopener noreferrer" class="mt-2 inline-block text-sm text-primary-700 underline">View on Instagram ↗</a>
-                <p class="mt-1 text-xs text-slate-500">If the embed is unavailable, open the post on Instagram.</p>
-              </div>
-            ))}
-            {links.length > 0 && (
-              <div class={embeds.length > 0 ? "mt-3 flex flex-wrap gap-3" : "flex flex-wrap gap-3"}>
-                {links.map((post) => (
-                  <a
-                    href={post.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-2 self-start rounded-lg border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-                  >
-                    {embeds.length > 0 ? `Also on ${labels[post.platform]}` : `View on ${labels[post.platform]}`} ↗
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  </section>
+{(reels.length > 0 || posts.length > 0) && (
+  <nav
+    class="mt-6 border-t border-slate-200 pt-4"
+    aria-label="Videos about this app"
+  >
+    <h2 class="text-xs font-extrabold uppercase tracking-wide text-primary-700">
+      Watch the reels
+    </h2>
+    <ul class="mt-2 flex flex-wrap gap-2">
+      {reels.map((reel) => (
+        <li>
+          <a
+            href={reel.href}
+            class="inline-block rounded-full bg-primary-100 px-3 py-1 text-sm font-bold text-primary-900 transition hover:bg-primary-200"
+          >
+            {reel.label}
+          </a>
+        </li>
+      ))}
+      {posts.map((post) => (
+        <li>
+          <a
+            href={post.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-block rounded-full bg-primary-100 px-3 py-1 text-sm font-bold text-primary-900 transition hover:bg-primary-200"
+          >
+            Watch on {labels[post.platform]} <span aria-hidden="true">↗</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
 )}

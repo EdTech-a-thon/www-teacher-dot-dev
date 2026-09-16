@@ -75,7 +75,6 @@ export async function getSolutionGallery(): Promise<GalleryItem[]> {
     getCollection("solutions"),
     getDailyEntries(),
   ]);
-  const socialBySolution = new Map<string, GalleryItem["socialPosts"]>();
   const reelsBySolution = new Map<string, GalleryItem["reels"]>();
   for (const entry of [...dailyEntries].reverse()) {
     if (!entry.solution) continue;
@@ -86,12 +85,6 @@ export async function getSolutionGallery(): Promise<GalleryItem[]> {
       label: `Day ${entry.day} · ${entry.shortDateLabel}`,
     });
     reelsBySolution.set(entry.solution.key, reels);
-    const shortcode = /^https:\/\/www\.instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)\/$/.exec(entry.instagramUrl)?.[1];
-    if (shortcode) {
-      const social = socialBySolution.get(entry.solution.key) ?? [];
-      social.push({ platform: "instagram", url: `https://www.instagram.com/p/${shortcode}/`, group: "" });
-      socialBySolution.set(entry.solution.key, social);
-    }
   }
 
   return rows
@@ -107,10 +100,7 @@ export async function getSolutionGallery(): Promise<GalleryItem[]> {
       builtBy: row.data.builtBy,
       date: formatGalleryDate(row.data.completedAt),
       reels: reelsBySolution.get(row.id) ?? [],
-      socialPosts: [...new Map([
-        ...row.data.crmSocialPosts,
-        ...(socialBySolution.get(row.id) ?? []),
-      ].map((post) => [post.url, post])).values()],
+      socialPosts: row.data.crmSocialPosts,
       sortKey: row.data.completedAt,
     }))
     .sort((a, b) => b.sortKey.localeCompare(a.sortKey))

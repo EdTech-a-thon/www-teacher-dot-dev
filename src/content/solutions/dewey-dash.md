@@ -8,3 +8,5 @@ showcaseVideo: ""
 screenshot: ./images/dewey-dash.jpg
 problems: []
 ---
+
+Students explore a top-down library and practice finding books by their Dewey Decimal call numbers. Dewey Dash makes learning how the library is organized feel like an adventure.

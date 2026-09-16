@@ -25,7 +25,7 @@ const organizers = [
     siteLabel: "joshuapullen.com",
     siteHref: "https://www.joshuapullen.com/",
     blurb:
-      "An Algebra teacher and web developer from South Lyon, Michigan, Josh Pullen builds practical EdTech solutions for his classroom and shares them with other teachers. He has developed interactive math lessons for 3Blue1Brown and is the creator of Shuffle Buddy, a specialized seating chart generator. Josh's work provides simple, effective tools that solve the day-to-day challenges teachers actually face.",
+      "An Algebra teacher and web developer from South Lyon, Michigan, Josh Pullen builds practical EdTech apps for his classroom and shares them with other teachers. He has developed interactive math lessons for 3Blue1Brown and is the creator of Shuffle Buddy, a specialized seating chart generator. Josh's work provides simple, effective tools that solve the day-to-day challenges teachers actually face.",
   },
   {
     id: "jessika-golab",
@@ -79,18 +79,12 @@ const organizers = [
 ---
 
 <Layout>
-  <section class="-my-4 flex flex-col gap-10 md:-my-8">
-    <h1
-      class="mx-auto max-w-3xl text-balance text-center font-sora text-3xl font-medium leading-snug tracking-tight text-slate-900 sm:text-4xl"
-    >
-      We make tools for teachers that solve real classroom problems.
-    </h1>
-
+  <section class="-my-4 flex flex-col md:-my-8">
     {
       latestDaily && (
         <div class="grid gap-8 md:grid-cols-[1fr_24rem] md:grid-rows-[auto_1fr] md:gap-x-12">
           <div class="flex flex-col gap-4">
-            <h2
+            <h1
               data-daily-sentence
               data-date={latestDaily.date}
               class="text-balance text-2xl leading-snug text-slate-800 sm:text-3xl"
@@ -99,7 +93,7 @@ const organizers = [
               <span data-daily-verb>was</span>
               <mark class="box-decoration-clone rounded-md bg-primary-200 px-2 text-primary-950">Day {latestDaily.day}</mark>
               of solving a teacher's problem every single day.
-            </h2>
+            </h1>
             <p class="text-xl leading-snug text-slate-800">
               We built{" "}
               <a
@@ -162,7 +156,7 @@ const organizers = [
         Teachers and developers live in different worlds. At EdTech-a-thon
         2026, we brought them together from July 20–22, virtually and in person
         in Atlanta, GA, for three days of collaboration, community, and problem
-        solving. The first solutions in our gallery were built there.
+        solving. The first apps in our gallery were built there.
       </p>
       <a
         href="/events/edtech-a-thon-2026"

@@ -8,3 +8,5 @@ showcaseVideo: https://youtu.be/UqmliJH46XM
 problems:
   - pr-85
 ---
+
+Vocab Sleuth brings Wordle-style word guessing into grade 1–8 classrooms with age-appropriate vocabulary. Students get the familiar puzzle format with words they are more likely to know.

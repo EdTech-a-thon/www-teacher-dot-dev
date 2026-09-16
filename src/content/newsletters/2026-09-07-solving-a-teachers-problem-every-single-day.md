@@ -16,7 +16,7 @@ This is Elliot from the ~~EdTech-a-thon~~ teacher.dev team. Happy Labor Day to o
 
 **Do you have a back-to-school problem? Send it our way!**
 
-Our mission at teacher.dev is to solve as many teacher problems as possible, and we want to set a high bar. Here's our goal: solve one teacher's problem every single day. Some days will be a brand new website we've built for a teacher, and others will be about an improvement we've made to an existing solution.
+Our mission at teacher.dev is to solve as many teacher problems as possible, and we want to set a high bar. Here's our goal: solve one teacher's problem every single day. Some days will be a brand new website we've built for a teacher, and others will be about an improvement we've made to an existing app.
 
 So, if you have a problem as you're heading back to school, **please reply to this email with your problem** (we read every single reply) and we'll add it to our list for the coming week.
 

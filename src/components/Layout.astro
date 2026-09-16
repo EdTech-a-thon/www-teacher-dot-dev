@@ -9,7 +9,7 @@ interface Props {
 
 const {
   title,
-  description = "teacher.dev makes tools for teachers that solve real classroom problems.",
+  description = "Building apps for teachers that solve real problems.",
   compactContent = false,
 } = Astro.props;
 
@@ -56,15 +56,20 @@ const eventsOpen = isActive("/events");
     <title>{title ? `${title} – teacher.dev` : "teacher.dev"}</title>
   </head>
   <body class="text-slate-950">
-    <main
+    <div
       class={`page-shell mx-auto flex min-h-screen w-full max-w-5xl flex-col ${pageGap} px-4 py-6 sm:px-8 lg:px-20`}
     >
       <header
         class="flex flex-col gap-5 border-b border-slate-200 pb-6 sm:flex-row sm:items-center sm:justify-between"
       >
         <a href="/" class="flex w-fit items-center gap-3" aria-label="teacher.dev home">
-          <img src="/favicon.svg" alt="" class="h-12 w-12" />
-          <span class="font-display text-4xl text-slate-950">teacher.dev</span>
+          <img src="/favicon.svg" alt="" class="h-12 w-12 shrink-0" />
+          <span class="flex flex-col">
+            <span class="font-display text-4xl leading-none text-slate-950">teacher.dev</span>
+            <span class="mt-1 text-[0.625rem] font-bold uppercase leading-tight tracking-wide text-slate-600">
+              Building apps for teachers that solve real problems
+            </span>
+          </span>
         </a>
 
         <nav class="flex flex-wrap items-center gap-6 text-sm font-semibold sm:justify-end">
@@ -83,7 +88,7 @@ const eventsOpen = isActive("/events");
               isActive("/solutions") ? "font-bold text-slate-950 underline" : ""
             }`}
           >
-            Solutions
+            Apps
           </a>
 
           <a
@@ -126,7 +131,35 @@ const eventsOpen = isActive("/events");
         </nav>
       </header>
 
-      <slot />
-    </main>
+      <main class={`flex flex-1 flex-col ${pageGap}`}>
+        <slot />
+      </main>
+
+      <footer class="border-t border-slate-300 pt-8">
+        <div class="flex flex-col justify-between gap-8 sm:flex-row sm:items-start">
+          <div class="max-w-sm">
+            <a href="/" class="inline-flex items-center gap-2" aria-label="teacher.dev home">
+              <img src="/favicon.svg" alt="" class="h-8 w-8" />
+              <span class="font-display text-2xl text-slate-950">teacher.dev</span>
+            </a>
+            <p class="mt-3 text-sm leading-6 text-slate-600">
+              Free, accessible classroom apps built with teachers.
+            </p>
+          </div>
+          <nav aria-label="Footer" class="flex max-w-md flex-wrap gap-x-6 gap-y-3 text-sm font-bold text-slate-700 sm:justify-end">
+            <a href="/daily" class="hover:text-slate-950 hover:underline">Every Day</a>
+            <a href="/solutions" class="hover:text-slate-950 hover:underline">Apps</a>
+            <a href="/newsletters" class="hover:text-slate-950 hover:underline">Newsletter</a>
+            <a href="https://www.instagram.com/teacherdotdev/" target="_blank" rel="noopener noreferrer" class="hover:text-slate-950 hover:underline">Instagram ↗</a>
+            <a href="/privacy" class="hover:text-slate-950 hover:underline">Privacy</a>
+            <a href="/terms" class="hover:text-slate-950 hover:underline">Terms</a>
+          </nav>
+        </div>
+        <div class="mt-8 flex flex-wrap justify-between gap-3 border-t border-slate-200 py-5 text-xs text-slate-500">
+          <p>© {new Date().getFullYear()} teacher.dev</p>
+          <p>Made with teachers, for classrooms.</p>
+        </div>
+      </footer>
+    </div>
   </body>
 </html>

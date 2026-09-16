@@ -18,7 +18,7 @@ const latest = entries[0];
   months.length > 0 && (
     <div
       data-daily-calendar
-      class="relative w-full rounded-lg border border-slate-400 border-b-4 bg-white p-4"
+      class="w-full rounded-lg border border-slate-400 border-b-4 bg-white p-4"
     >
       {months.map((month, index) => (
         <div data-calendar-month hidden={index !== 0}>
@@ -80,23 +80,18 @@ const latest = entries[0];
             ))}
             {month.days.map(({ dayOfMonth, entry, inChallenge }) =>
               entry ? (
-                <button
-                  type="button"
-                  data-day
-                  data-label={entry.monthDayLabel}
-                  data-title={entry.title}
-                  data-href={`/daily/${entry.id}`}
-                  aria-expanded="false"
-                  aria-controls="daily-calendar-popover"
-                  aria-label={`Day ${entry.day}, ${entry.dateLabel}: ${entry.title}`}
-                  class={`flex aspect-square items-center justify-center rounded font-bold text-primary-950 transition hover:bg-primary-300 aria-expanded:bg-primary-400 ${
+                <a
+                  href={`/daily/${entry.id}`}
+                  aria-label={`Learn more about Day ${entry.day}, ${entry.dateLabel}: ${entry.title}`}
+                  aria-current={entry === latest ? "date" : undefined}
+                  class={`flex aspect-square items-center justify-center rounded font-bold text-primary-950 transition hover:bg-primary-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700 ${
                     entry === latest
                       ? "bg-primary-300 ring-2 ring-primary-700"
                       : "bg-primary-200"
                   }`}
                 >
                   {entry.day}
-                </button>
+                </a>
               ) : (
                 <span
                   class={`flex aspect-square items-center justify-center rounded ${
@@ -111,49 +106,6 @@ const latest = entries[0];
           </div>
         </div>
       ))}
-
-      <div
-        id="daily-calendar-popover"
-        data-calendar-popover
-        role="dialog"
-        aria-labelledby="daily-calendar-popover-title"
-        hidden
-        class="absolute z-20 w-60 rounded-lg border border-slate-400 border-b-4 bg-white p-4 text-left shadow-xl"
-      >
-        <div class="flex items-start justify-between gap-2">
-          <p
-            data-popover-label
-            class="text-sm font-bold text-primary-700"
-          />
-          <button
-            type="button"
-            data-popover-close
-            aria-label="Close"
-            class="-mr-1 -mt-1 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-900"
-          >
-            <svg viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true">
-              <path
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                d="M6 6l12 12M18 6L6 18"
-              />
-            </svg>
-          </button>
-        </div>
-        <p
-          id="daily-calendar-popover-title"
-          data-popover-title
-          class="mt-1 font-extrabold leading-snug text-slate-950"
-        />
-        <a
-          data-popover-day
-          class="mt-3 inline-block text-sm font-bold text-primary-700 underline-offset-4 decoration-2 transition hover:text-primary-900 hover:underline"
-        >
-          Learn more →
-        </a>
-      </div>
     </div>
   )
 }
@@ -165,67 +117,18 @@ const latest = entries[0];
       const months = [
         ...calendar.querySelectorAll<HTMLElement>("[data-calendar-month]"),
       ];
-      const popover = calendar.querySelector<HTMLElement>(
-        "[data-calendar-popover]",
-      );
-      if (!popover) return;
-      const label = popover.querySelector("[data-popover-label]");
-      const title = popover.querySelector("[data-popover-title]");
-      const dayLink = popover.querySelector<HTMLAnchorElement>("[data-popover-day]");
-      let openButton: HTMLElement | null = null;
-
-      const close = () => {
-        popover.hidden = true;
-        openButton?.setAttribute("aria-expanded", "false");
-        openButton = null;
-      };
-
-      const open = (button: HTMLElement) => {
-        if (button === openButton) return close();
-        close();
-        if (label) label.textContent = button.dataset.label ?? "";
-        if (title) title.textContent = button.dataset.title ?? "";
-        if (dayLink) dayLink.href = button.dataset.href ?? "";
-        popover.hidden = false;
-
-        // Center the pop-up under the day, kept within the calendar's width.
-        const box = calendar.getBoundingClientRect();
-        const cell = button.getBoundingClientRect();
-        const left = cell.left - box.left + cell.width / 2 - popover.offsetWidth / 2;
-        popover.style.left = `${Math.max(0, Math.min(left, box.width - popover.offsetWidth))}px`;
-        popover.style.top = `${cell.bottom - box.top + 6}px`;
-        button.setAttribute("aria-expanded", "true");
-        openButton = button;
-      };
 
       calendar.addEventListener("click", (event) => {
         if (!(event.target instanceof Element)) return;
-        const dayButton = event.target.closest<HTMLElement>("[data-day]");
-        if (dayButton) return open(dayButton);
-        if (event.target.closest("[data-popover-close]")) return close();
-
         const step = event.target.closest<HTMLElement>("[data-calendar-step]");
         if (!step) return;
-        close();
+
         const current = months.findIndex((month) => !month.hidden);
         const next = months[current + Number(step.dataset.calendarStep)];
         if (next) {
           months[current].hidden = true;
           next.hidden = false;
         }
-      });
-
-      document.addEventListener("click", (event) => {
-        if (openButton && event.target instanceof Node && !calendar.contains(event.target)) {
-          close();
-        }
-      });
-
-      document.addEventListener("keydown", (event) => {
-        if (event.key !== "Escape" || !openButton) return;
-        const button = openButton;
-        close();
-        button.focus();
       });
     });
 </script>

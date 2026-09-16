@@ -8,3 +8,5 @@ showcaseVideo: ""
 screenshot: ./images/forensic-simulator.jpg
 problems: []
 ---
+
+Students investigate a simulated cartoon crime scene, collect and package evidence, and then see how well it survives the trip to the lab. Evidence Room provides a classroom-friendly way to practice careful evidence handling.

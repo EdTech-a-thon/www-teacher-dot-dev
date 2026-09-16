@@ -9,7 +9,7 @@ import test from 'node:test';
 const exec = promisify(execFile);
 const root = path.resolve(import.meta.dirname, '..');
 
-test('solution social content builds Instagram embeds and TikTok links, never private fields', async (t) => {
+test('solution social content builds compact external links, never embeds or private fields', async (t) => {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'teacher-social-'));
   t.after(() => rm(dir, { recursive: true, force: true }));
   await mkdir(path.join(dir, 'src/content/solutions'), { recursive: true });
@@ -24,7 +24,7 @@ import { getCollection } from 'astro:content';
 import SocialPosts from '../components/SocialPosts.astro';
 const rows = await getCollection('solutions');
 ---
-{rows.map(row => <SocialPosts posts={row.data.crmSocialPosts} solutionName={row.data.title} />)}
+{rows.map(row => <SocialPosts posts={row.data.crmSocialPosts} />)}
 `);
   const content = path.join(dir, 'src/content/solutions/example.md');
   const instagram = 'https://www.instagram.com/p/Test123/';
@@ -39,15 +39,13 @@ const rows = await getCollection('solutions');
   });
   await build();
   const html = await readFile(path.join(dir, 'dist/index.html'), 'utf8');
-  assert.match(html, /<iframe[^>]+src="https:\/\/www\.instagram\.com\/p\/Test123\/embed\/"/);
-  assert.ok(html.includes(`href="${instagram}"`), 'Instagram fallback link');
+  assert.match(html, /Watch the reels/);
+  assert.ok(html.includes(`href="${instagram}"`), 'Instagram link');
   assert.ok(html.includes(`href="${tiktok}"`), 'TikTok link');
-  // Cross-posted to both, so it reads as one video rather than two entries.
-  assert.match(html, /Also on TikTok/);
-  assert.equal((html.match(/<iframe/g) || []).length, 1, 'TikTok is never embedded');
-  assert.equal(html.includes('tiktok.com/embed'), false);
+  assert.equal(html.includes('<iframe'), false, 'Social posts are never embedded');
+  assert.equal(html.includes('See it on social'), false);
   assert.equal(html.includes('PRIVATE'), false);
-  assert.equal(html.includes('<script'), false, 'No TikTok or Instagram script needed');
+  assert.equal(html.includes('<script'), false, 'No social scripts needed');
 
   // Unconnected posts stay separate, each offered on its own terms.
   await writeFile(content, `---\ntitle: Example solution\ncompletedAt: "2026-09-01"\ncrmSocialPosts: ${JSON.stringify(
@@ -55,8 +53,8 @@ const rows = await getCollection('solutions');
   )}\n---\n`);
   await build();
   const separate = await readFile(path.join(dir, 'dist/index.html'), 'utf8');
-  assert.equal(separate.includes('Also on TikTok'), false);
-  assert.match(separate, /View on TikTok/);
+  assert.equal((separate.match(/Watch on Instagram/g) || []).length, 1);
+  assert.equal((separate.match(/Watch on TikTok/g) || []).length, 1);
 
   // A fabricated cluster tag is refused rather than silently rendered.
   await writeFile(content, '---\ntitle: Bad group\ncompletedAt: "2026-09-01"\ncrmSocialPosts: [{"platform":"tiktok","url":"https://www.tiktok.com/@teacher/video/1","group":"../etc"}]\n---\n');

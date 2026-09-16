@@ -24,7 +24,7 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
 {
   items.length === 0 ? (
     <p class="py-8 text-center italic text-slate-500">
-      No completed solutions yet — check back during the event.
+      No completed apps yet — check back during the event.
     </p>
   ) : (
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -96,7 +96,7 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
     <>
       {items.map((item) => (
         <template data-solution-social={item.key}>
-          <SocialPosts posts={item.socialPosts} solutionName={item.name} />
+          <SocialPosts posts={item.socialPosts} reels={item.reels} />
         </template>
       ))}
       <script
@@ -106,10 +106,10 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
       />
       <div
         data-solution-modal
-        class="fixed inset-0 z-50 hidden items-start justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm sm:items-center"
+        class="fixed inset-0 z-50 hidden items-start justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm"
         role="dialog"
         aria-modal="true"
-        aria-label="Solution details"
+        aria-label="App details"
         tabindex="-1"
       >
         <div
@@ -150,10 +150,6 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
             />
             <div data-solution-social-container />
             <div data-solution-actions class="mt-6 flex flex-wrap gap-3" />
-            <div
-              data-solution-reels
-              class="mt-6 hidden border-t border-slate-200 pt-4"
-            />
           </div>
         </div>
       </div>
@@ -170,7 +166,6 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
   const meta = document.querySelector("[data-solution-meta]");
   const description = document.querySelector("[data-solution-description]");
   const actions = document.querySelector("[data-solution-actions]");
-  const reels = document.querySelector("[data-solution-reels]");
   const social = document.querySelector("[data-solution-social-container]");
   const closeButton = document.querySelector("[data-solution-close]");
   const items = dataEl ? JSON.parse(dataEl.textContent || "[]") : [];
@@ -214,13 +209,13 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
     }
     if (actions instanceof HTMLElement) {
       actions.innerHTML = item.link
-        ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500">Visit solution <span aria-hidden="true">&rarr;</span></a>`
+        ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500">Visit app <span aria-hidden="true">&rarr;</span></a>`
         : "";
     }
     if (actions instanceof HTMLElement) {
       const detailLink = document.createElement("a");
       detailLink.href = `/solutions/${encodeURIComponent(item.key)}/`;
-      detailLink.textContent = "Open solution page →";
+      detailLink.textContent = "Open app page →";
       detailLink.className = "inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50";
       actions.append(detailLink);
     }
@@ -229,19 +224,7 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
         .find((element) => element.dataset.solutionSocial === key);
       social.replaceChildren(...(template ? [template.content.cloneNode(true)] : []));
     }
-    if (reels instanceof HTMLElement) {
-      const list = item.reels || [];
-      reels.innerHTML = list.length
-        ? `<h3 class="text-xs font-extrabold uppercase tracking-wide text-primary-700">Watch the reels</h3><ul class="mt-2 flex flex-wrap gap-2">${list
-            .map(
-              (reel) =>
-                `<li><a href="${reel.href}" class="inline-block rounded-full bg-primary-100 px-3 py-1 text-sm font-bold text-primary-900 transition hover:bg-primary-200">${reel.label}</a></li>`,
-            )
-            .join("")}</ul>`
-        : "";
-      reels.classList.toggle("hidden", list.length === 0);
-    }
-
+    modal.scrollTop = 0;
     modal.classList.remove("hidden");
     modal.classList.add("flex");
     document.body.style.overflow = "hidden";

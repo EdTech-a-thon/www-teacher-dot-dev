@@ -18,18 +18,17 @@ const { items } = Astro.props;
             id="solutions-carousel-heading"
             class="mt-1 font-display text-4xl text-slate-950"
           >
-            Solution Gallery
+            App Gallery
           </h2>
           <p class="mt-2 max-w-2xl text-slate-600">
-            Browse the first solutions built by teachers and developers at
-            EdTech-a-thon.
+            Browse free, accessible apps built with teachers.
           </p>
         </div>
         <a
           href="/solutions"
           class="inline-flex w-fit items-center justify-center py-1 text-sm font-semibold text-slate-700 underline-offset-4 decoration-2 transition hover:text-slate-950 hover:underline"
         >
-          View all solutions <span aria-hidden="true" class="ml-1">→</span>
+          View all apps <span aria-hidden="true" class="ml-1">→</span>
         </a>
       </div>
 
@@ -37,7 +36,7 @@ const { items } = Astro.props;
         <div
           class="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           data-solution-carousel-track
-          aria-label="Featured solutions"
+          aria-label="Featured apps"
         >
           {items.map((item) => (
             <a
@@ -91,7 +90,7 @@ const { items } = Astro.props;
             type="button"
             data-solution-carousel-prev
             class="rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition hover:border-primary-300 hover:text-slate-950"
-            aria-label="Previous solutions"
+            aria-label="Previous apps"
           >
             <svg viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
               <path
@@ -108,7 +107,7 @@ const { items } = Astro.props;
             type="button"
             data-solution-carousel-next
             class="rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition hover:border-primary-300 hover:text-slate-950"
-            aria-label="Next solutions"
+            aria-label="Next apps"
           >
             <svg viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
               <path

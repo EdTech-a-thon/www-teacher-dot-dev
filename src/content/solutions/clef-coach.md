@@ -8,3 +8,5 @@ showcaseVideo: ""
 screenshot: ./images/clef-coach.jpg
 problems: []
 ---
+
+Clef Coach helps string teachers build customized notes-and-fingerings practice for their students. Teachers can choose challenge settings and share a practice link that students can open right away.

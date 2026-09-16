@@ -16,7 +16,7 @@ First off, we originally planned for this to be a weekly newsletter, but we're g
 
 ---
 
-**We're releasing more solutions than ever**
+**We're releasing more apps than ever**
 
 Last week, we told you about our goal of solving one teacher's problem every single day. We're currently on Day 13 and still going strong! You can see the problems we've solved by visiting [teacher.dev/daily](https://teacher.dev/daily)!
 

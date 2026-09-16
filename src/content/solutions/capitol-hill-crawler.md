@@ -8,3 +8,5 @@ showcaseVideo: ""
 screenshot: ./images/capitol-crawler.jpg
 problems: []
 ---
+
+Students answer official U.S. civics questions while moving a bill through Congress and toward the president’s desk. The game turns the legislative process into an interactive classroom adventure.

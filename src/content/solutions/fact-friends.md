@@ -8,3 +8,5 @@ showcaseVideo: ""
 screenshot: ./images/fact-friends.jpg
 problems: []
 ---
+
+Fact Friends gives students friendly, focused math-fact practice at the level that is right for them. Teachers can manage classes and students can join securely with a simple class code.

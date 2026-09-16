@@ -10,7 +10,7 @@ issueNumber: 1
 
 Hi there,
 
-This is Elliot from the EdTech-a-thon team. I hope your week is going well! This is the first EdTech-a-thon weekly update we're sending as we continue to build & release solutions to teacher-submitted problems. We'll also include fun updates about the team and highlight some awesome educators.
+This is Elliot from the EdTech-a-thon team. I hope your week is going well! This is the first EdTech-a-thon weekly update we're sending as we continue to build & release apps for teacher-submitted problems. We'll also include fun updates about the team and highlight some awesome educators.
 
 If at any point you want to stop receiving these emails, just tell us and we'll take you off the list.
 
@@ -28,9 +28,9 @@ If you want to help us bring [GroupReaders.com](http://groupreaders.com) to more
 
 ---
 
-**Teacher Solution Spotlight: Sam's trick to generate vocab slides from spreadsheets**
+**Teacher App Spotlight: Sam's trick to generate vocab slides from spreadsheets**
 
-If you're heading back to school and find yourself making similar slides over & over by hand, awesome teacher (and in-person EdTech-a-thon 2026 attendee!) Sam Quincy built a solution. We met with him this week to discuss the tool he made that lets him turn his class vocab spreadsheet into slides in about 10 seconds.
+If you're heading back to school and find yourself making similar slides over & over by hand, awesome teacher (and in-person EdTech-a-thon 2026 attendee!) Sam Quincy built an app. We met with him this week to discuss the tool he made that lets him turn his class vocab spreadsheet into slides in about 10 seconds.
 
 If you have 5 minutes and want to automate repetitive slide creation for yourself, here's a tutorial with Sam! He uses his vocab spreadsheet as an example, but you can use this to generate slides for just about anything (homeroom slides, a daily challenge, etc).
 
@@ -42,7 +42,7 @@ If you have 5 minutes and want to automate repetitive slide creation for yoursel
 
 **Updates from the EdTech-a-thon Team: I moved across the country so we can keep solving your problems**
 
-Mere weeks after the EdTech-a-thon, I packed up everything I own in Atlanta and moved into an apartment with Duncan (another EdTech-a-thon director) in Boston. We've been having a blast developing solutions for teachers as well as decking out our apartment with posters from the EdTech-a-thon.
+Mere weeks after the EdTech-a-thon, I packed up everything I own in Atlanta and moved into an apartment with Duncan (another EdTech-a-thon director) in Boston. We've been having a blast developing apps with teachers as well as decking out our apartment with posters from the EdTech-a-thon.
 
 ![Duncan putting up a poster with the EdTech-a-thon logo](./images/DuncanPoster.jpg "320")
 

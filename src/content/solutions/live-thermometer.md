@@ -8,3 +8,5 @@ showcaseVideo: https://youtu.be/YSMQyuoL2Xg
 problems:
   - pr-418
 ---
+
+Enter any city to show its current temperature on a digital glass thermometer. The live display gives teachers a familiar, real-world way to help students practice reading and understanding the number line.
