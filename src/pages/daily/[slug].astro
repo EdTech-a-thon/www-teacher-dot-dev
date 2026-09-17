@@ -73,7 +73,7 @@ const { entry, newer, older } = Astro.props;
         {
           entry.solution && (
             <a
-              href={`/solutions#${entry.solution.key}`}
+              href={`/apps/${entry.solution.key}/`}
               class="group mt-8 block rounded-lg border border-slate-400 border-b-4 bg-white p-5 transition hover:border-primary-400"
             >
               <p class="text-xs font-extrabold uppercase tracking-wide text-primary-700">
@@ -88,9 +88,7 @@ const { entry, newer, older } = Astro.props;
                 </p>
               )}
               <span class="mt-4 inline-block text-sm font-bold text-slate-700 underline-offset-4 decoration-2 group-hover:text-slate-950 group-hover:underline">
-                {entry.solution.hasShowcase
-                  ? "Watch the full walkthrough and try it →"
-                  : "See the app →"}
+                See the app →
               </span>
             </a>
           )

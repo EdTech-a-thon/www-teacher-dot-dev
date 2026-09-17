@@ -1,0 +1,26 @@
+---
+// A static redirect page. The gallery is at /apps now, but /solutions links are
+// out in the world, so those URLs forward instead of 404ing. The inline script
+// carries any #app-key across, and the meta refresh covers scriptless clients.
+interface Props {
+  to: string;
+}
+
+const { to } = Astro.props;
+const toJson = JSON.stringify(to);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="refresh" content={`0; url=${to}`} />
+    <link rel="canonical" href={to} />
+    <meta name="robots" content="noindex" />
+    <title>Redirecting…</title>
+    <script is:inline set:html={`location.replace(${toJson} + location.hash);`} />
+  </head>
+  <body>
+    <p>This page moved to <a href={to}>{to}</a>.</p>
+  </body>
+</html>

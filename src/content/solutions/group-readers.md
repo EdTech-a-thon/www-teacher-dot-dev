@@ -4,7 +4,6 @@ oneLiner: Easily match students into book club groups based on the books they wa
 builtBy: Duncan Johnson & Carrie Chandler
 completedAt: "2026-07-30"
 solutionUrl: groupreaders.com
-showcaseVideo: https://youtu.be/ad_sFTtQdp0
 problems:
   - pr-258
 ---

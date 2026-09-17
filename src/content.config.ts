@@ -11,7 +11,6 @@ const solutions = defineCollection({
       builtBy: z.string().default(""),
       completedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       solutionUrl: z.string().default(""),
-      showcaseVideo: z.string().default(""),
       // CRM-owned public URLs, never comments, DMs, captions or internal notes.
       crmSocialPosts: z.array(z.discriminatedUnion("platform", [
         z.object({

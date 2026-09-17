@@ -15,7 +15,6 @@ export interface DailyEntry {
     key: string;
     name: string;
     oneLiner: string;
-    hasShowcase: boolean;
   };
 }
 
@@ -92,7 +91,6 @@ export async function getDailyEntries(): Promise<DailyEntry[]> {
           key: solution.id,
           name: solution.data.title,
           oneLiner: solution.data.oneLiner,
-          hasShowcase: Boolean(solution.data.showcaseVideo),
         },
       };
     })

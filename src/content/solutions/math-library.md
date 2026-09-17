@@ -4,7 +4,6 @@ oneLiner: A self-paced quadratic-forms escape room where students restore six li
 builtBy: Jack Hubert
 completedAt: "2026-08-31"
 solutionUrl: https://mathlibrary.teacher.dev/
-showcaseVideo: ""
 screenshot: ./images/math-library.jpg
 problems: []
 ---

@@ -1,6 +1,7 @@
 ---
 import type { GalleryItem } from "../lib/board";
 import { Image } from "astro:assets";
+import ReelTabs from "./ReelTabs.astro";
 import SocialPosts from "./SocialPosts.astro";
 
 interface Props {
@@ -9,7 +10,13 @@ interface Props {
 
 const { items } = Astro.props;
 const modalItems = items.map((item) => ({
-  ...item,
+  key: item.key,
+  name: item.name,
+  oneLiner: item.oneLiner,
+  descriptionHtml: item.descriptionHtml,
+  link: item.link,
+  builtBy: item.builtBy,
+  date: item.date,
   screenshot: item.screenshot
     ? {
         src: item.screenshot.src,
@@ -27,66 +34,87 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
       No completed apps yet — check back during the event.
     </p>
   ) : (
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {items.map((item) => (
-        <a
-          href={`/solutions/${item.key}/`}
-          data-solution-open={item.key}
-          class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-1 hover:border-primary-300 hover:shadow-xl"
+    <div data-app-browser>
+      <div class="sm:max-w-sm">
+        <label
+          for="app-search"
+          class="block text-xs font-extrabold uppercase tracking-wide text-primary-700"
         >
-          <div class="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-primary-200 to-primary-400">
-            {item.videoThumb ? (
-              <img
-                src={item.videoThumb}
-                alt=""
-                loading="lazy"
-                class="h-full w-full object-cover transition group-hover:scale-105"
-              />
-            ) : item.screenshot ? (
-              <Image
-                src={item.screenshot}
-                alt={`${item.name} screenshot`}
-                widths={[480, 720]}
-                sizes="(min-width: 1024px) 280px, (min-width: 640px) 45vw, 90vw"
-                loading="lazy"
-                class="h-full w-full object-cover transition group-hover:scale-105"
-              />
-            ) : (
-              <div class="flex h-full w-full items-center justify-center p-4 text-center font-display text-xl text-primary-950">
-                {item.name}
-              </div>
-            )}
-            {item.videoEmbed && (
-              <div class="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/20">
-                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 opacity-0 shadow-lg transition group-hover:opacity-100">
-                  <svg
-                    viewBox="0 0 24 24"
-                    class="ml-0.5 h-5 w-5 fill-primary-700"
-                    aria-hidden="true"
-                  >
+          Search apps
+        </label>
+        <input
+          id="app-search"
+          type="search"
+          data-app-search
+          autocomplete="off"
+          placeholder="Try “math”, “library”, or a builder’s name"
+          class="mt-1 w-full rounded-lg border border-slate-400 border-b-4 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none"
+        />
+      </div>
+
+      <p class="mt-3 text-sm text-slate-600" data-app-count aria-live="polite" />
+
+      <div
+        class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+        data-app-grid
+      >
+        {items.map((item) => (
+          <a
+            href={`/apps/${item.key}/`}
+            data-solution-open={item.key}
+            data-app-card
+            data-app-search-text={item.searchText}
+            class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-1 hover:border-primary-300 hover:shadow-xl"
+          >
+            <div class="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-primary-200 to-primary-400">
+              {item.screenshot ? (
+                <Image
+                  src={item.screenshot}
+                  alt={`${item.name} screenshot`}
+                  widths={[480, 720]}
+                  sizes="(min-width: 1024px) 280px, (min-width: 640px) 45vw, 90vw"
+                  loading="lazy"
+                  class="h-full w-full object-cover transition group-hover:scale-105"
+                />
+              ) : (
+                <div class="flex h-full w-full items-center justify-center p-4 text-center font-display text-xl text-primary-950">
+                  {item.name}
+                </div>
+              )}
+              {item.reels.length > 0 && (
+                <span class="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-slate-950/70 px-2 py-0.5 text-xs font-bold text-white">
+                  <svg viewBox="0 0 24 24" class="h-3 w-3 fill-current" aria-hidden="true">
                     <path d="M8 5v14l11-7z" />
                   </svg>
+                  {item.reels.length} reel{item.reels.length === 1 ? "" : "s"}
                 </span>
-              </div>
-            )}
-          </div>
-          <div class="flex grow flex-col gap-1 p-4">
-            <h2 class="text-lg font-bold leading-snug text-slate-900">
-              {item.name}
-            </h2>
-            {item.oneLiner && (
-              <p class="line-clamp-2 text-sm text-slate-600">
-                {item.oneLiner}
-              </p>
-            )}
-            {item.builtBy && (
-              <p class="mt-auto pt-2 text-xs text-slate-500">
-                Built by {item.builtBy}
-              </p>
-            )}
-          </div>
-        </a>
-      ))}
+              )}
+            </div>
+            <div class="flex grow flex-col gap-1 p-4">
+              <h2 class="text-lg font-bold leading-snug text-slate-900">
+                {item.name}
+              </h2>
+              {item.oneLiner && (
+                <p class="line-clamp-2 text-sm text-slate-600">
+                  {item.oneLiner}
+                </p>
+              )}
+              {item.builtBy && (
+                <p class="mt-auto pt-2 text-xs text-slate-500">
+                  Built by {item.builtBy}
+                </p>
+              )}
+            </div>
+          </a>
+        ))}
+      </div>
+
+      <p
+        class="hidden py-10 text-center italic text-slate-500"
+        data-app-empty
+      >
+        No apps match that search.
+      </p>
     </div>
   )
 }
@@ -96,7 +124,8 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
     <>
       {items.map((item) => (
         <template data-solution-social={item.key}>
-          <SocialPosts posts={item.socialPosts} reels={item.reels} />
+          <ReelTabs reels={item.reels} name={item.name} class="mt-6 border-t border-slate-200 pt-4" />
+          <SocialPosts posts={item.socialPosts} />
         </template>
       ))}
       <script
@@ -189,18 +218,17 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
     if (!item || !(modal instanceof HTMLElement)) return;
 
     if (media instanceof HTMLElement) {
-      if (item.videoEmbed) {
-        media.innerHTML = `<div class="aspect-video w-full bg-black"><iframe src="${item.videoEmbed}" title="${item.name} showcase video" class="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
-      } else if (item.screenshot) {
-        media.innerHTML = `<div class="aspect-video w-full overflow-hidden bg-slate-100"><img src="${item.screenshot.src}" alt="${item.name} screenshot" width="${item.screenshot.width}" height="${item.screenshot.height}" class="h-full w-full object-cover" /></div>`;
-      } else {
-        media.innerHTML = "";
-      }
+      media.innerHTML = item.screenshot
+        ? `<div class="aspect-video w-full overflow-hidden bg-slate-100"><img src="${item.screenshot.src}" alt="${item.name} screenshot" width="${item.screenshot.width}" height="${item.screenshot.height}" class="h-full w-full object-cover" /></div>`
+        : "";
     }
 
     if (title instanceof HTMLElement) title.textContent = item.name;
     if (meta instanceof HTMLElement) {
-      meta.textContent = [item.builtBy ? `Built by ${item.builtBy}` : "", item.date]
+      meta.textContent = [
+        item.builtBy ? `Built by ${item.builtBy}` : "",
+        item.date,
+      ]
         .filter(Boolean)
         .join(" • ");
     }
@@ -211,10 +239,8 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
       actions.innerHTML = item.link
         ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500">Visit app <span aria-hidden="true">&rarr;</span></a>`
         : "";
-    }
-    if (actions instanceof HTMLElement) {
       const detailLink = document.createElement("a");
-      detailLink.href = `/solutions/${encodeURIComponent(item.key)}/`;
+      detailLink.href = `/apps/${encodeURIComponent(item.key)}/`;
       detailLink.textContent = "Open app page →";
       detailLink.className = "inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50";
       actions.append(detailLink);
@@ -228,7 +254,7 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
     modal.classList.remove("hidden");
     modal.classList.add("flex");
     document.body.style.overflow = "hidden";
-    // Keep the address shareable: /solutions#<solution> opens this popup.
+    // Keep the address shareable: /apps#<app> opens this popup.
     history.replaceState(null, "", `#${encodeURIComponent(key)}`);
   }
 
@@ -256,6 +282,46 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
   });
   window.addEventListener("hashchange", openFromHash);
   openFromHash();
+</script>
+
+<script>
+  // The grid arrives newest-first from the build, so searching only hides the
+  // cards that don't match — nothing is reordered.
+  const browser = document.querySelector("[data-app-browser]");
+  const searchInput = browser?.querySelector("[data-app-search]");
+  const grid = browser?.querySelector("[data-app-grid]");
+  const empty = browser?.querySelector("[data-app-empty]");
+  const count = browser?.querySelector("[data-app-count]");
+
+  if (grid instanceof HTMLElement && searchInput instanceof HTMLInputElement) {
+    const cards = [...grid.querySelectorAll<HTMLElement>("[data-app-card]")];
+    const total = cards.length;
+
+    function apply() {
+      const terms = searchInput.value.toLowerCase().split(/\s+/).filter(Boolean);
+
+      // Inline display beats the card's own `flex` utility class.
+      const visible = cards.filter((card) => {
+        const haystack = card.dataset.appSearchText ?? "";
+        const shown = terms.every((term) => haystack.includes(term));
+        card.style.display = shown ? "" : "none";
+        return shown;
+      });
+
+      if (empty instanceof HTMLElement) {
+        empty.classList.toggle("hidden", visible.length > 0);
+      }
+      if (count instanceof HTMLElement) {
+        count.textContent =
+          visible.length === total
+            ? `${total} app${total === 1 ? "" : "s"}`
+            : `${visible.length} of ${total} app${total === 1 ? "" : "s"}`;
+      }
+    }
+
+    searchInput.addEventListener("input", apply);
+    apply();
+  }
 </script>
 
 <style>

@@ -1,0 +1,168 @@
+---
+// A switcher for every Instagram Reel about one app. The first Reel ships as a
+// blockquote that Instagram's embed.js turns into the player; the tab buttons
+// carry the other permalinks and swap the blockquote out on click. Until (or
+// unless) embed.js runs, each blockquote is a plain link to the Reel.
+// The app gallery clones this markup into its popup, so initialisation is
+// driven by a MutationObserver rather than a one-off pass at page load.
+import type { GalleryReel } from "../lib/board";
+
+interface Props {
+  reels: GalleryReel[];
+  name: string;
+  class?: string;
+}
+
+const { reels, name, class: className = "" } = Astro.props;
+const first = reels[0];
+---
+
+{
+  first && (
+    <div class={`reel-tabs ${className}`} data-reel-tabs>
+      <h2 class="text-xs font-extrabold uppercase tracking-wide text-primary-700">
+        {reels.length > 1
+          ? `${reels.length} reels about ${name}`
+          : "Watch the reel"}
+      </h2>
+
+      {reels.length > 1 && (
+        <div
+          class="mt-3 flex flex-wrap gap-2"
+          role="tablist"
+          aria-label={`Reels about ${name}`}
+        >
+          {reels.map((reel, index) => (
+            <button
+              type="button"
+              role="tab"
+              data-reel-tab
+              data-reel-url={reel.url}
+              data-reel-title={reel.title}
+              data-reel-href={reel.href}
+              aria-selected={index === 0 ? "true" : "false"}
+              class="rounded-full border border-slate-300 px-3 py-1 text-sm font-bold text-slate-700 transition hover:border-primary-400 hover:text-slate-950 aria-selected:border-primary-500 aria-selected:bg-primary-100 aria-selected:text-primary-900"
+            >
+              {reel.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div class="mt-4 max-w-[22rem]">
+        <div class="relative w-full" data-reel-embed>
+          <blockquote
+            class="instagram-media"
+            data-instgrm-permalink={first.url}
+            data-instgrm-version="14"
+          >
+            <a href={first.url} target="_blank" rel="noopener noreferrer">
+              Watch on Instagram →
+            </a>
+          </blockquote>
+        </div>
+        <p class="mt-3 text-sm leading-6 text-slate-600" data-reel-caption>
+          {first.href && (
+            <a
+              href={first.href}
+              class="font-bold text-slate-700 underline underline-offset-4 decoration-2 transition hover:text-slate-950"
+            >
+              {first.title}
+            </a>
+          )}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+<script is:inline async src="https://www.instagram.com/embed.js"></script>
+
+<script>
+  interface WithInstagram {
+    instgrm?: { Embeds: { process: () => void } };
+  }
+
+  function processEmbeds() {
+    (window as unknown as WithInstagram).instgrm?.Embeds.process();
+  }
+
+  function selectTab(tab: HTMLElement) {
+    const group = tab.closest("[data-reel-tabs]");
+    if (!(group instanceof HTMLElement)) return;
+    const embed = group.querySelector("[data-reel-embed]");
+    const caption = group.querySelector("[data-reel-caption]");
+    const url = tab.dataset.reelUrl;
+    if (!(embed instanceof HTMLElement) || !url) return;
+
+    for (const other of group.querySelectorAll("[data-reel-tab]")) {
+      other.setAttribute("aria-selected", String(other === tab));
+    }
+
+    embed.innerHTML = `<blockquote class="instagram-media" data-instgrm-permalink="${url}" data-instgrm-version="14"><a href="${url}" target="_blank" rel="noopener noreferrer">Watch on Instagram →</a></blockquote>`;
+    processEmbeds();
+
+    if (caption instanceof HTMLElement) {
+      const href = tab.dataset.reelHref;
+      const title = tab.dataset.reelTitle ?? "";
+      caption.textContent = "";
+      if (href) {
+        const link = document.createElement("a");
+        link.href = href;
+        link.textContent = title;
+        link.className =
+          "font-bold text-slate-700 underline underline-offset-4 decoration-2 transition hover:text-slate-950";
+        caption.append(link);
+      }
+    }
+  }
+
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const tab = target.closest<HTMLElement>("[data-reel-tab]");
+    if (tab) selectTab(tab);
+  });
+
+  // The gallery popup clones pristine, unprocessed blockquotes in after load,
+  // so ask embed.js to pick them up whenever a reel group appears.
+  new MutationObserver((records) => {
+    for (const record of records) {
+      for (const node of record.addedNodes) {
+        if (!(node instanceof HTMLElement)) continue;
+        if (node.matches("[data-reel-tabs]") || node.querySelector("[data-reel-tabs]")) {
+          processEmbeds();
+          return;
+        }
+      }
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+</script>
+
+<style>
+  /* embed.js positions the iframe absolutely while the Reel loads, so the
+     wrapper stays relative to keep it inside this box. */
+  .reel-tabs :global(.instagram-media) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Before embed.js runs (or if it's blocked), show the link in a box about
+     the size of the Reel. */
+  .reel-tabs :global(blockquote.instagram-media) {
+    display: flex;
+    aspect-ratio: 352 / 646;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border: 1px solid var(--color-slate-400);
+    border-bottom-width: 4px;
+    border-radius: 0.5rem;
+    background: white;
+    text-align: center;
+    font-weight: 700;
+    color: var(--color-primary-700);
+  }
+</style>

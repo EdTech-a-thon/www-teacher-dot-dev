@@ -25,7 +25,7 @@ const { items } = Astro.props;
           </p>
         </div>
         <a
-          href="/solutions"
+          href="/apps"
           class="inline-flex w-fit items-center justify-center py-1 text-sm font-semibold text-slate-700 underline-offset-4 decoration-2 transition hover:text-slate-950 hover:underline"
         >
           View all apps <span aria-hidden="true" class="ml-1">→</span>
@@ -40,18 +40,11 @@ const { items } = Astro.props;
         >
           {items.map((item) => (
             <a
-              href="/solutions"
+              href={`/apps/${item.key}/`}
               class="group flex w-[82%] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-1 hover:border-primary-300 hover:shadow-xl sm:w-[45%] lg:w-[31%]"
             >
               <div class="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-primary-200 to-primary-400">
-                {item.videoThumb ? (
-                  <img
-                    src={item.videoThumb}
-                    alt=""
-                    loading="lazy"
-                    class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                  />
-                ) : item.screenshot ? (
+                {item.screenshot ? (
                   <Image
                     src={item.screenshot}
                     alt={`${item.name} screenshot`}
