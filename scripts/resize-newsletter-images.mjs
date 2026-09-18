@@ -12,7 +12,10 @@ import sharp from "sharp";
 
 const maxSide = 1200;
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const imagesDir = path.join(root, "src/content/newsletters/images");
+const imagesDir = path.resolve(
+  root,
+  process.argv[2] ?? "src/content/newsletters/images",
+);
 
 const kb = (bytes) => `${Math.round(bytes / 1024)}KB`;
 
