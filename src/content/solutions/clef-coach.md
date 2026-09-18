@@ -4,7 +4,7 @@ oneLiner: A customizable notes-and-fingering practice builder for string teacher
 builtBy: Chris Smithell & Elliot Roe
 completedAt: "2026-08-18"
 solutionUrl: clefcoach.com
-screenshot: ./images/clef-coach.jpg
+screenshot: ./images/clef-coach.png
 problems: []
 ---
 

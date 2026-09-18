@@ -50,6 +50,11 @@ const GALLERY_MONTHS = [
   "Dec",
 ];
 
+const FEATURED_SOLUTION_ORDER = new Map([
+  ["fact-friends", 0],
+  ["clef-coach", 1],
+]);
+
 export function formatGalleryDate(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
   if (!m) return "";
@@ -121,6 +126,13 @@ export async function getSolutionGallery(): Promise<GalleryItem[]> {
         ]),
       };
     })
-    .sort((a, b) => b.sortKey.localeCompare(a.sortKey))
+    .sort((a, b) => {
+      const featuredA = FEATURED_SOLUTION_ORDER.get(a.key);
+      const featuredB = FEATURED_SOLUTION_ORDER.get(b.key);
+      if (featuredA !== undefined || featuredB !== undefined) {
+        return (featuredA ?? Number.POSITIVE_INFINITY) - (featuredB ?? Number.POSITIVE_INFINITY);
+      }
+      return b.sortKey.localeCompare(a.sortKey);
+    })
     .map(({ sortKey, ...item }) => item);
 }
