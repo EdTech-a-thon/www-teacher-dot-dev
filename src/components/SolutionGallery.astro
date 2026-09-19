@@ -2,6 +2,7 @@
 import type { GalleryItem } from "../lib/board";
 import { Image } from "astro:assets";
 import ReelTabs from "./ReelTabs.astro";
+import ReelTabsController from "./ReelTabsController.astro";
 import SocialPosts from "./SocialPosts.astro";
 
 interface Props {
@@ -128,6 +129,7 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
           <SocialPosts posts={item.socialPosts} />
         </template>
       ))}
+      <ReelTabsController />
       <script
         id="solution-gallery-data"
         type="application/json"

@@ -24,10 +24,12 @@ test('solution social content plays Reels inline and links out, never leaking pr
   await copyFile(path.join(root, 'src/content.config.ts'), path.join(dir, 'src/content.config.ts'));
   await copyFile(path.join(root, 'src/components/SocialPosts.astro'), path.join(dir, 'src/components/SocialPosts.astro'));
   await copyFile(path.join(root, 'src/components/ReelTabs.astro'), path.join(dir, 'src/components/ReelTabs.astro'));
+  await copyFile(path.join(root, 'src/components/ReelTabsController.astro'), path.join(dir, 'src/components/ReelTabsController.astro'));
   // Instagram posts are played inline by ReelTabs; everything else links out.
   await writeFile(path.join(dir, 'src/pages/index.astro'), `---
 import { getCollection } from 'astro:content';
 import ReelTabs from '../components/ReelTabs.astro';
+import ReelTabsController from '../components/ReelTabsController.astro';
 import SocialPosts from '../components/SocialPosts.astro';
 const rows = await getCollection('solutions');
 const reels = (row) => row.data.crmSocialPosts
@@ -40,6 +42,7 @@ const reels = (row) => row.data.crmSocialPosts
     <SocialPosts posts={row.data.crmSocialPosts} />
   </>
 ))}
+<ReelTabsController />
 `);
   const content = path.join(dir, 'src/content/solutions/example.md');
   const instagram = 'https://www.instagram.com/p/Test123/';
@@ -62,6 +65,10 @@ const reels = (row) => row.data.crmSocialPosts
   assert.ok(html.includes(`href="${tiktok}"`), 'TikTok link');
   // Instagram's own embed.js swaps in the player, so nothing ships an iframe.
   assert.equal(html.includes('<iframe'), false, 'No iframes are served');
+  assert.ok(
+    html.indexOf('data-reel-tabs') < html.indexOf('https://www.instagram.com/embed.js'),
+    'tab controller follows the reel markup',
+  );
   assert.equal(html.includes('See it on social'), false);
   assert.equal(html.includes('PRIVATE'), false);
 

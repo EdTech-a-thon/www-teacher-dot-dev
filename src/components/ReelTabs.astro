@@ -3,8 +3,8 @@
 // blockquote that Instagram's embed.js turns into the player; the tab buttons
 // carry the other permalinks and swap the blockquote out on click. Until (or
 // unless) embed.js runs, each blockquote is a plain link to the Reel.
-// The app gallery clones this markup into its popup, so initialisation is
-// driven by a MutationObserver rather than a one-off pass at page load.
+// ReelTabsController must be rendered once outside any template containing
+// this component so the gallery's cloned markup remains interactive.
 import type { GalleryReel } from "../lib/board";
 
 interface Props {
@@ -75,69 +75,6 @@ const first = reels[0];
     </div>
   )
 }
-
-<script is:inline async src="https://www.instagram.com/embed.js"></script>
-
-<script>
-  interface WithInstagram {
-    instgrm?: { Embeds: { process: () => void } };
-  }
-
-  function processEmbeds() {
-    (window as unknown as WithInstagram).instgrm?.Embeds.process();
-  }
-
-  function selectTab(tab: HTMLElement) {
-    const group = tab.closest("[data-reel-tabs]");
-    if (!(group instanceof HTMLElement)) return;
-    const embed = group.querySelector("[data-reel-embed]");
-    const caption = group.querySelector("[data-reel-caption]");
-    const url = tab.dataset.reelUrl;
-    if (!(embed instanceof HTMLElement) || !url) return;
-
-    for (const other of group.querySelectorAll("[data-reel-tab]")) {
-      other.setAttribute("aria-selected", String(other === tab));
-    }
-
-    embed.innerHTML = `<blockquote class="instagram-media" data-instgrm-permalink="${url}" data-instgrm-version="14"><a href="${url}" target="_blank" rel="noopener noreferrer">Watch on Instagram →</a></blockquote>`;
-    processEmbeds();
-
-    if (caption instanceof HTMLElement) {
-      const href = tab.dataset.reelHref;
-      const title = tab.dataset.reelTitle ?? "";
-      caption.textContent = "";
-      if (href) {
-        const link = document.createElement("a");
-        link.href = href;
-        link.textContent = title;
-        link.className =
-          "font-bold text-slate-700 underline underline-offset-4 decoration-2 transition hover:text-slate-950";
-        caption.append(link);
-      }
-    }
-  }
-
-  document.addEventListener("click", (event) => {
-    const target = event.target;
-    if (!(target instanceof Element)) return;
-    const tab = target.closest<HTMLElement>("[data-reel-tab]");
-    if (tab) selectTab(tab);
-  });
-
-  // The gallery popup clones pristine, unprocessed blockquotes in after load,
-  // so ask embed.js to pick them up whenever a reel group appears.
-  new MutationObserver((records) => {
-    for (const record of records) {
-      for (const node of record.addedNodes) {
-        if (!(node instanceof HTMLElement)) continue;
-        if (node.matches("[data-reel-tabs]") || node.querySelector("[data-reel-tabs]")) {
-          processEmbeds();
-          return;
-        }
-      }
-    }
-  }).observe(document.body, { childList: true, subtree: true });
-</script>
 
 <style>
   /* embed.js positions the iframe absolutely while the Reel loads, so the

@@ -1,6 +1,7 @@
 ---
 import Layout from "../../components/Layout.astro";
 import ReelTabs from "../../components/ReelTabs.astro";
+import ReelTabsController from "../../components/ReelTabsController.astro";
 import SocialPosts from "../../components/SocialPosts.astro";
 import { getSolutionGallery } from "../../lib/board";
 
@@ -25,6 +26,7 @@ const { solution } = Astro.props;
     {solution.descriptionHtml && <div class="description mt-6 text-slate-700" set:html={solution.descriptionHtml} />}
     {solution.link && <a href={solution.link} target="_blank" rel="noopener noreferrer" class="mt-6 inline-block rounded-lg bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-primary-700">Visit app ↗</a>}
     <ReelTabs reels={solution.reels} name={solution.name} class="mt-8 border-t border-slate-200 pt-6" />
+    <ReelTabsController />
     <SocialPosts posts={solution.socialPosts} />
   </article>
 </Layout>

@@ -1,0 +1,77 @@
+---
+// Load this once outside any <template> that contains ReelTabs. Scripts inside
+// a template are inert, even after its contents are cloned into the document.
+---
+
+<script is:inline async src="https://www.instagram.com/embed.js"></script>
+
+<script>
+  interface WithInstagram {
+    instgrm?: { Embeds: { process: () => void } };
+  }
+
+  function processEmbeds() {
+    (window as unknown as WithInstagram).instgrm?.Embeds.process();
+  }
+
+  function selectTab(tab: HTMLElement) {
+    const group = tab.closest("[data-reel-tabs]");
+    if (!(group instanceof HTMLElement)) return;
+    const embed = group.querySelector("[data-reel-embed]");
+    const caption = group.querySelector("[data-reel-caption]");
+    const url = tab.dataset.reelUrl;
+    if (!(embed instanceof HTMLElement) || !url) return;
+
+    for (const other of group.querySelectorAll("[data-reel-tab]")) {
+      other.setAttribute("aria-selected", String(other === tab));
+    }
+
+    const blockquote = document.createElement("blockquote");
+    blockquote.className = "instagram-media";
+    blockquote.dataset.instgrmPermalink = url;
+    blockquote.dataset.instgrmVersion = "14";
+    const instagramLink = document.createElement("a");
+    instagramLink.href = url;
+    instagramLink.target = "_blank";
+    instagramLink.rel = "noopener noreferrer";
+    instagramLink.textContent = "Watch on Instagram →";
+    blockquote.append(instagramLink);
+    embed.replaceChildren(blockquote);
+    processEmbeds();
+
+    if (caption instanceof HTMLElement) {
+      const href = tab.dataset.reelHref;
+      const title = tab.dataset.reelTitle ?? "";
+      caption.replaceChildren();
+      if (href) {
+        const link = document.createElement("a");
+        link.href = href;
+        link.textContent = title;
+        link.className =
+          "font-bold text-slate-700 underline underline-offset-4 decoration-2 transition hover:text-slate-950";
+        caption.append(link);
+      }
+    }
+  }
+
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const tab = target.closest<HTMLElement>("[data-reel-tab]");
+    if (tab) selectTab(tab);
+  });
+
+  // The gallery popup clones pristine, unprocessed blockquotes in after load,
+  // so ask embed.js to pick them up whenever a reel group appears.
+  new MutationObserver((records) => {
+    for (const record of records) {
+      for (const node of record.addedNodes) {
+        if (!(node instanceof HTMLElement)) continue;
+        if (node.matches("[data-reel-tabs]") || node.querySelector("[data-reel-tabs]")) {
+          processEmbeds();
+          return;
+        }
+      }
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+</script>
