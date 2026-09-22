@@ -3,6 +3,7 @@ title: Group Readers
 oneLiner: Easily match students into book club groups based on the books they want to read.
 builtBy: Duncan Johnson & Carrie Chandler
 completedAt: "2026-07-30"
+screenshot: ./images/group-readers.png
 solutionUrl: groupreaders.com
 problems:
   - pr-258
