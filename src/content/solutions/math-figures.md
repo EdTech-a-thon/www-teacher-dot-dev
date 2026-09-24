@@ -1,6 +1,6 @@
 ---
 title: Math Figures
-oneLiner: A simple way to make grids, number lines, and more for your class material.
+oneLiner: A simple way to make grids, number lines, and more for your tests.
 completedAt: "2026-09-23"
 solutionUrl: mathfigures.com
 screenshot: ./images/math-figures.png
