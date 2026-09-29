@@ -26,6 +26,8 @@ const solutions = defineCollection({
         }),
       ])).default([]),
       screenshot: image().optional(),
+      // The app's own favicon, shown on its card when there's no screenshot.
+      favicon: image().optional(),
       problems: z.array(z.string()).default([]),
     }),
 });

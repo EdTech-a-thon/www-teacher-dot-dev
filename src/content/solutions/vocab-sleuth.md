@@ -4,6 +4,7 @@ oneLiner: A Wordle-style game for grade 1-8 classrooms using words your students
 builtBy: Duncan Johnson
 completedAt: "2026-05-20"
 solutionUrl: vocabsleuth.com
+favicon: ./images/vocab-sleuth-favicon.svg
 problems:
   - pr-85
 ---

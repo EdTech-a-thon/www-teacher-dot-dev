@@ -4,6 +4,7 @@ oneLiner: A glass thermometer that displays the current temperature of any city 
 builtBy: Duncan Johnson
 completedAt: "2026-05-23"
 solutionUrl: livethermometer.com
+favicon: ./images/live-thermometer-favicon.svg
 problems:
   - pr-418
 ---

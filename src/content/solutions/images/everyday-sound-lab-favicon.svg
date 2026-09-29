@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>Everyday Sound Lab</title>
+  <rect width="32" height="32" rx="9" fill="#477b70"/>
+  <g fill="none" stroke="#fff8e5" stroke-linecap="round" stroke-width="4">
+    <path d="M9 13.5v5"/>
+    <path d="M16 9v14"/>
+    <path d="M23 13.5v5"/>
+  </g>
+</svg>

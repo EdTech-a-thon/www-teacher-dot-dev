@@ -25,6 +25,7 @@ const modalItems = items.map((item) => ({
         height: item.screenshot.height,
       }
     : null,
+  favicon: item.favicon?.src ?? null,
 }));
 const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
 ---
@@ -78,7 +79,17 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
                   class="h-full w-full object-cover transition group-hover:scale-105"
                 />
               ) : (
-                <div class="flex h-full w-full items-center justify-center p-4 text-center font-display text-xl text-primary-950">
+                <div class="flex h-full w-full flex-col items-center justify-center gap-3 p-4 text-center font-display text-xl text-primary-950">
+                  {item.favicon && (
+                    <img
+                      src={item.favicon.src}
+                      alt=""
+                      width="64"
+                      height="64"
+                      loading="lazy"
+                      class="h-16 w-16 drop-shadow-md transition group-hover:scale-110"
+                    />
+                  )}
                   {item.name}
                 </div>
               )}
@@ -222,7 +233,9 @@ const modalJson = JSON.stringify(modalItems).replace(/</g, "\\u003c");
     if (media instanceof HTMLElement) {
       media.innerHTML = item.screenshot
         ? `<div class="aspect-video w-full overflow-hidden bg-slate-100"><img src="${item.screenshot.src}" alt="${item.name} screenshot" width="${item.screenshot.width}" height="${item.screenshot.height}" class="h-full w-full object-cover" /></div>`
-        : "";
+        : item.favicon
+          ? `<div class="flex aspect-video w-full items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400"><img src="${item.favicon}" alt="" width="96" height="96" class="h-24 w-24 drop-shadow-md" /></div>`
+          : "";
     }
 
     if (title instanceof HTMLElement) title.textContent = item.name;

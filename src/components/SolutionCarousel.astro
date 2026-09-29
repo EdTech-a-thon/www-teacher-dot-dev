@@ -54,7 +54,17 @@ const { items } = Astro.props;
                     class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                   />
                 ) : (
-                  <div class="flex h-full w-full items-center justify-center p-4 text-center font-display text-xl text-primary-950">
+                  <div class="flex h-full w-full flex-col items-center justify-center gap-3 p-4 text-center font-display text-xl text-primary-950">
+                    {item.favicon && (
+                      <img
+                        src={item.favicon.src}
+                        alt=""
+                        width="64"
+                        height="64"
+                        loading="lazy"
+                        class="h-16 w-16 drop-shadow-md transition group-hover:scale-110"
+                      />
+                    )}
                     {item.name}
                   </div>
                 )}

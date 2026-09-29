@@ -27,6 +27,7 @@ export interface GalleryItem {
   descriptionHtml: string;
   link: string;
   screenshot?: ImageMetadata;
+  favicon?: ImageMetadata;
   builtBy: string;
   date: string;
   socialPosts: { platform: "instagram" | "tiktok"; url: string; group: string }[];
@@ -50,10 +51,33 @@ const GALLERY_MONTHS = [
   "Dec",
 ];
 
-const FEATURED_SOLUTION_ORDER = new Map([
-  ["fact-friends", 0],
-  ["clef-coach", 1],
-]);
+// Most viewed first: total views across every Reel, TikTok and YouTube video
+// about the app, from Zernio's analytics on 2026-09-29. Apps not listed here
+// follow, newest first.
+const FEATURED_SOLUTION_ORDER = new Map(
+  [
+    "geometric-solids",
+    "shy-safari",
+    "growing-reader",
+    "math-figures",
+    "chemistry-figures",
+    "test-parrot",
+    "group-readers",
+    "picture-practice",
+    "iep-behavior-tracker",
+    "label-your-lunch",
+    "clock-literacy",
+    "rounding-with-number-lines",
+    "everyday-sound-lab",
+    "participation-tracker",
+    "math-facts",
+    "vocab-sleuth",
+    "fact-friends",
+    "live-thermometer",
+    "clef-coach",
+    "forensic-simulator",
+  ].map((key, index) => [key, index]),
+);
 
 export function formatGalleryDate(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
@@ -113,6 +137,7 @@ export async function getSolutionGallery(): Promise<GalleryItem[]> {
         descriptionHtml: row.rendered?.html ?? "",
         link: normalizeUrl(row.data.solutionUrl),
         screenshot: row.data.screenshot,
+        favicon: row.data.favicon,
         builtBy: row.data.builtBy,
         date: formatGalleryDate(row.data.completedAt),
         sortKey: row.data.completedAt,
