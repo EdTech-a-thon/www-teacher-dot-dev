@@ -75,20 +75,23 @@ const latest = entries[0];
                 {weekday}
               </span>
             ))}
-            {Array.from({ length: month.leadingBlanks }, () => (
-              <span aria-hidden="true" />
-            ))}
-            {month.days.map(({ dayOfMonth, entry, inChallenge }) =>
+            {[
+              ...month.leadingDays.map((day) => ({ ...day, otherMonth: true })),
+              ...month.days.map((day) => ({ ...day, otherMonth: false })),
+              ...month.trailingDays.map((day) => ({ ...day, otherMonth: true })),
+            ].map(({ dayOfMonth, entry, inChallenge, otherMonth }) =>
               entry ? (
                 <a
                   href={`/daily/${entry.id}`}
                   aria-label={`Learn more about Day ${entry.day}, ${entry.dateLabel}: ${entry.title}`}
                   aria-current={entry === latest ? "date" : undefined}
                   class={`flex aspect-square items-center justify-center rounded font-bold text-primary-950 transition hover:bg-primary-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700 ${
-                    entry === latest
-                      ? "bg-primary-300 ring-2 ring-primary-700"
-                      : "bg-primary-200"
-                  }`}
+                    otherMonth
+                      ? "bg-primary-200/50"
+                      : entry === latest
+                        ? "bg-primary-300"
+                        : "bg-primary-200"
+                  } ${entry === latest ? "ring-2 ring-primary-700" : ""}`}
                 >
                   {entry.day}
                 </a>

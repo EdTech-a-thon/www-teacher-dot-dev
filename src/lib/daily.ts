@@ -97,11 +97,21 @@ export async function getDailyEntries(): Promise<DailyEntry[]> {
     .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
 }
 
+export interface CalendarDay {
+  dayOfMonth: number;
+  entry?: DailyEntry;
+  inChallenge: boolean;
+}
+
 export interface CalendarMonth {
   key: string;
   label: string;
   leadingBlanks: number;
-  days: { dayOfMonth: number; entry?: DailyEntry; inChallenge: boolean }[];
+  // The previous month's days that fill the first week's leading blanks.
+  leadingDays: CalendarDay[];
+  days: CalendarDay[];
+  // The next month's days that fill out the last week.
+  trailingDays: CalendarDay[];
   entries: DailyEntry[];
 }
 
@@ -127,25 +137,41 @@ export function getCalendarMonths(entries: DailyEntry[]): CalendarMonth[] {
     if (!byDate.has(entry.date)) byDate.set(entry.date, entry);
   }
 
+  // Day numbers outside 1..daysInMonth roll into the neighbouring month.
+  const calendarDay = (year: number, month: number, day: number) => {
+    const date = new Date(Date.UTC(year, month - 1, day))
+      .toISOString()
+      .slice(0, 10);
+    return {
+      dayOfMonth: Number(date.slice(8)),
+      entry: byDate.get(date),
+      inChallenge: date >= first.date && date <= latest.date,
+    };
+  };
+
   const months: CalendarMonth[] = [];
   const [firstYear, firstMonth] = first.date.split("-").map(Number);
   let [year, month] = latest.date.split("-").map(Number);
   while (year > firstYear || (year === firstYear && month >= firstMonth)) {
     const prefix = `${year}-${pad(month)}`;
     const start = new Date(Date.UTC(year, month - 1, 1));
-    const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    const end = new Date(Date.UTC(year, month, 0));
+    const daysInMonth = end.getUTCDate();
+    const leadingBlanks = start.getUTCDay();
+    const trailingBlanks = 6 - end.getUTCDay();
     months.push({
       key: prefix,
       label: monthLabel.format(start),
-      leadingBlanks: start.getUTCDay(),
-      days: Array.from({ length: daysInMonth }, (_, index) => {
-        const date = `${prefix}-${pad(index + 1)}`;
-        return {
-          dayOfMonth: index + 1,
-          entry: byDate.get(date),
-          inChallenge: date >= first.date && date <= latest.date,
-        };
-      }),
+      leadingBlanks,
+      leadingDays: Array.from({ length: leadingBlanks }, (_, index) =>
+        calendarDay(year, month, index - leadingBlanks + 1),
+      ),
+      days: Array.from({ length: daysInMonth }, (_, index) =>
+        calendarDay(year, month, index + 1),
+      ),
+      trailingDays: Array.from({ length: trailingBlanks }, (_, index) =>
+        calendarDay(year, month, daysInMonth + index + 1),
+      ),
       entries: entries.filter((entry) => entry.date.startsWith(prefix)),
     });
     month -= 1;
